@@ -2,13 +2,24 @@ const http = require('http');
 const url = require('url');
 const readline = require('readline');
 const fs = require('fs');
-const exec = require('child_process').exec;
+const spawn = require('child_process').spawn;
+const chalk = require('chalk');
 
 const getInfoAPI = "https://api.bilibili.com/x/player/pagelist";
 const getPlayurlAPI = "https://api.bilibili.com/x/player/playurl";
 const statAPI = "https://api.bilibili.com/x/web-interface/archive/stat";
 const viewAPI = "https://api.bilibili.com/x/web-interface/view";
 
+const dlFolder = "J:/__tmp/";
+const cookieFile = "cookies.ck";
+const qualityText = {
+    116: "1080P60",
+    112: "1080P 高码率",
+    80: "1080P",
+    64: "720P",
+    32: "480P",
+    16: "360P"
+};
 const readlineAsync = () => {
     const rl = readline.createInterface({
         input: process.stdin,
@@ -109,14 +120,14 @@ var getVideoInfo = async (input) => {
     let info = new Object();
     info.bvid = response.data.bvid;
     info.aid = response.data.aid;
-    info.videos = response.data.videos;
+    info.videos = response.data.videos;  //几个分p
     info.title = response.data.title;
     info.pages = [];
     for (let item of response.data.pages) {
         let page = new Object();
-        page.page = item.page;
+        page.page = item.page;    //序号
         page.cid = item.cid;
-        page.part = item.part;
+        page.part = item.part;   //分p名
         info.pages.push(page);
     }
     //console.log(info);
@@ -147,6 +158,15 @@ var getPlayurl = async (av, cid, cookie) => {
     let response = await httpGet(options);
     if (response.code !== 0) {
         throw "code:" + response.code + " message:" + response.message;
+    }
+    let highestQuality = response.data.accept_quality[0];
+    let quality = response.data.quality;
+    if (quality != highestQuality) {
+        console.log(chalk.red.bold.bgWhite(`WARNING: the highest quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded is\n${qualityText[quality]}\ncontinue?(y/n)`));
+        line = await readlineAsync();
+        if (line == 'n') {
+            process.exit();
+        }
     }
     return response.data.durl[0].url;
 };
@@ -180,25 +200,41 @@ var av2bv = async (av) => {
     let response = await httpGet(options);
     return response.data.bvid;
 };
+var showQuality = (url) => {
+    q = url.match(/-(\d+)\.flv\?/)[1];
+    if (q < 112) {
+        return chalk.red.bold.bgWhite("NOT 1080P高码率 or ERROR!");
+    } else {
+        return chalk.bold.white(qualityText[q]);
+    }
+};
+
+const arg = process.argv[2];
 
 const main = async () => {
-    let cookie = fs.readFileSync("cookies.ck", 'utf8')
-    console.log("input link or BV or aid:");
-    let line = await readlineAsync();
-    //let line="BV1s34y1Q76t";
+    let cookie = fs.readFileSync(cookieFile, 'utf8');
+    let line;
+    if (arg == undefined) {
+        console.log("input link or BV or aid:");
+        line = await readlineAsync();
+        //let line = "BV1234y1D71H";
+    } else {
+        line = arg;
+    }
     let videoInfo;
     try {
         videoInfo = await getVideoInfo(line);
     }
     catch (e) {
-        console.error(e);
-        process.exit();
+        console.error(chalk.red.bold.bgWhite(e));
+        process.exit(1);
     }
     //let bv = await input2Bv();
     //let info = await getPartinfo(bv);
     let dlList = [];
+    console.log(chalk.bold.white(videoInfo.title));
     if (videoInfo.videos === 1) {
-        dlList = [{ cid: videoInfo.pages[0].cid, part: videoInfo.pages[0].part }];
+        dlList = [{ page: 1, cid: videoInfo.pages[0].cid, part: videoInfo.pages[0].part }];
         console.log("only 1 part, downloading..");
     } else {
         for (let item of videoInfo.pages) {
@@ -206,15 +242,11 @@ const main = async () => {
         }
         console.log(videoInfo.videos + " parts, which do you want?");
         let inp = await readlineAsync();
-        //let inp = '3 1';
-
         if (inp == '') {
-            for (let i of videoInfo.pages) {
-                dlList.push({ cid: i.cid, part: i.part })
-            }
+            dlList = videoInfo.pages;
         } else {
             for (let i of inp.split(/[ ,]/)) {
-                dlList.push({ cid: videoInfo.pages[i - 1].cid, part: videoInfo.pages[i - 1].part })
+                dlList.push({ page: i, cid: videoInfo.pages[i - 1].cid, part: videoInfo.pages[i - 1].part })
             }
         }
     }
@@ -223,12 +255,28 @@ const main = async () => {
         try {
             dlUrl = await getPlayurl(videoInfo.aid, item.cid, cookie);
         } catch (e) {
-            console.error(e);
-            process.exit();
+            console.error(chalk.red.bold.bgWhite(e));
+            process.exit(1);
         }
-        console.log(dlUrl);
-        let cmdString = 'aria2c -s 16 -x 16 --referer="https://www.bilibili.com" "' + dlUrl + '"';
-        await consoleAsync(cmdString);
+        console.log(`P${item.page}: ${showQuality(dlUrl)}`);    //low quality warning
+        //console.log(dlUrl);
+        //await consoleAsync(cmdString);
+        let fileName = `${videoInfo.aid} - ${videoInfo.title}.flv`;
+        if (videoInfo.videos > 1) {
+            fileName = fileName.slice(0, -4) + `_p${item.page}_${item.part}.flv`;
+        }
+        var dlTask = spawn("aria2c", ['-s', '16', '-x', '16', '--check-certificate=false', '--referer=https://www.bilibili.com', dlUrl, '-d', dlFolder, '-o', fileName]);
+        dlTask.stdout.on('data', (data) => {
+            if (data) {
+                console.log(`P${item.page}: ${data}`);
+            }
+        });
+        dlTask.stderr.on('data', (data) => {
+            console.log(`stderr: ${data}`);
+        });
+        dlTask.on("close", (code) => {
+            console.log(`child process ${item.page} exited with code ${code}`);
+        });
     }
 };
 
