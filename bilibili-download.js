@@ -5,13 +5,13 @@ const fs = require('fs');
 const spawn = require('child_process').spawn;
 const chalk = require('chalk');
 
-const getInfoAPI = "https://api.bilibili.com/x/player/pagelist";
-const getPlayurlAPI = "https://api.bilibili.com/x/player/playurl";
+const infoAPI = "https://api.bilibili.com/x/player/pagelist";
+const playurlAPI = "https://api.bilibili.com/x/player/playurl";
 const statAPI = "https://api.bilibili.com/x/web-interface/archive/stat";
 const viewAPI = "https://api.bilibili.com/x/web-interface/view";
 
 const dlFolder = "J:/__tmp/";
-const cookieFile = "cookies.ck";
+const cookieFile = "cookies_38658897.ck";
 const qualityText = {
     116: "1080P60",
     112: "1080P 高码率",
@@ -20,6 +20,7 @@ const qualityText = {
     32: "480P",
     16: "360P"
 };
+
 const readlineAsync = () => {
     const rl = readline.createInterface({
         input: process.stdin,
@@ -52,20 +53,6 @@ const httpGet = (options) => {
         req.end();
     });
 };
-const consoleAsync = (cmdString) => {
-    return new Promise((resolve, reject) => {
-        exec(cmdString, (error, stdout, stderr) => {
-            if (error) {
-                console.error('error: ' + error);
-                reject(error);
-                return;
-            }
-            console.log('stdout: ' + stdout);
-            resolve(stdout);
-            console.log('stderr: ' + typeof stderr);
-        });
-    });
-};
 var input2Bv = async () => {
     console.log("input link or BV or aid:");
     let line = await readlineAsync();
@@ -83,7 +70,7 @@ var input2Bv = async () => {
     return bvid;
 }
 var getPartinfo = async (bv) => {
-    let fullUrl = getInfoAPI + url.format({
+    let fullUrl = infoAPI + url.format({
         query: {
             bvid: bv,
             jsonp: "jsonp"
@@ -130,11 +117,10 @@ var getVideoInfo = async (input) => {
         page.part = item.part;   //分p名
         info.pages.push(page);
     }
-    //console.log(info);
     return info;
 };
 var getPlayurl = async (av, cid, cookie) => {
-    let fullUrl = getPlayurlAPI + url.format({
+    let fullUrl = playurlAPI + url.format({
         query: {
             avid: av,
             cid: cid,
@@ -159,10 +145,13 @@ var getPlayurl = async (av, cid, cookie) => {
     if (response.code !== 0) {
         throw "code:" + response.code + " message:" + response.message;
     }
-    let highestQuality = response.data.accept_quality[0];
+    let highestQuality = Math.max(...response.data.accept_quality);
     let quality = response.data.quality;
     if (quality != highestQuality) {
-        console.log(chalk.red.bold.bgWhite(`WARNING: the highest quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded is\n${qualityText[quality]}\ncontinue?(y/n)`));
+        if (quality == 64) {
+            console.log(chalk.white.bold.bgRed("WARNING: cookie may be invalid"));
+        }
+        console.log(chalk.white.bold.bgRed(`WARNING: the highest quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded is\n${qualityText[quality]}\ncontinue?(y/n)`));
         line = await readlineAsync();
         if (line == 'n') {
             process.exit();
@@ -203,7 +192,7 @@ var av2bv = async (av) => {
 var showQuality = (url) => {
     q = url.match(/-(\d+)\.flv\?/)[1];
     if (q < 112) {
-        return chalk.red.bold.bgWhite("NOT 1080P高码率 or ERROR!");
+        return chalk.white.bold.bgRed("NOT 1080P高码率 or ERROR!");
     } else {
         return chalk.bold.white(qualityText[q]);
     }
@@ -226,7 +215,7 @@ const main = async () => {
         videoInfo = await getVideoInfo(line);
     }
     catch (e) {
-        console.error(chalk.red.bold.bgWhite(e));
+        console.error(chalk.white.bold.bgRed(e));
         process.exit(1);
     }
     //let bv = await input2Bv();
@@ -255,7 +244,7 @@ const main = async () => {
         try {
             dlUrl = await getPlayurl(videoInfo.aid, item.cid, cookie);
         } catch (e) {
-            console.error(chalk.red.bold.bgWhite(e));
+            console.error(chalk.white.bold.bgRed(e));
             process.exit(1);
         }
         console.log(`P${item.page}: ${showQuality(dlUrl)}`);    //low quality warning
