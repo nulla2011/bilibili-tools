@@ -10,9 +10,11 @@ const statAPI = "https://api.bilibili.com/x/web-interface/archive/stat";
 const viewAPI = "https://api.bilibili.com/x/web-interface/view";
 
 const qualityText = {
+    120: "4K",
     116: "1080P60",
     112: "1080P 高码率",
     80: "1080P",
+    74: "720P60",
     64: "720P",
     32: "480P",
     16: "360P"
@@ -118,22 +120,24 @@ var getVideoInfo = async (input) => {
     }
     return info;
 };
-var getPlayurl = async (av, cid, cookie) => {
-    let fullUrl = playurlAPI + url.format({
+var fullPlayAPIUrl = (av, cid, isDASH) => {
+    return playurlAPI + url.format({
         query: {
             avid: av,
             cid: cid,
-            qn: 116,        //quality
+            qn: settings.bestQuality,        //quality
             fnver: 0,
-            fnval: 0,
+            fnval: isDASH ? 16 : 0,
             player: 1,
             otype: "json"
         }
     });
+}
+var getPlayurl = async (url, cookie) => {
     let options = {
         hostname: "api.bilibili.com",
         port: 80,
-        path: fullUrl.replace("https://api.bilibili.com", ""),
+        path: url.replace("https://api.bilibili.com", ""),
         method: 'GET',
         headers: {
             'referer': 'https://www.bilibili.com/',
@@ -150,7 +154,7 @@ var getPlayurl = async (av, cid, cookie) => {
         if (quality == 64) {
             console.log(chalk.white.bold.bgRed("WARNING: cookie may be invalid"));
         }
-        console.log(chalk.white.bold.bgRed(`WARNING: the highest quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded is\n${qualityText[quality]}\ncontinue?(y/n)`));
+        console.log(chalk.white.bold.bgRed(`WARNING: the max quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded/play is\n${qualityText[quality]}\ncontinue?(y/n)`));
         line = await readlineSync();
         if (line == 'n') {
             process.exit();
@@ -158,6 +162,9 @@ var getPlayurl = async (av, cid, cookie) => {
     }
     return response.data.durl[0].url;
 };
+var getPlayurlDASH = async (av, cid, cookie) => {
+
+}
 var bv2av = async (bv) => {
     let fullUrl = viewAPI + url.format({
         query: {
@@ -202,5 +209,6 @@ module.exports = {
     readlineSync,
     getVideoInfo,
     getPlayurl,
-    showQuality    
+    fullPlayAPIUrl,
+    showQuality
 }

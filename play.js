@@ -4,6 +4,7 @@ const util = require('./util.js');
 const cookie = require('./util.js').cookie;
 
 const arg = process.argv[2];
+
 const main = async () => {
     let line;
     if (arg == undefined) {
@@ -40,7 +41,7 @@ const main = async () => {
     }
     let dlUrl;
     try {
-        dlUrl = await util.getPlayurl(videoInfo.aid, playInfo.cid, cookie);
+        dlUrl = await util.getPlayurl(util.fullPlayAPIUrl(videoInfo.aid, playInfo.cid, isDASH = false), cookie);
     } catch (e) {
         console.error(chalk.white.bold.bgRed(e));
         process.exit(1);
@@ -48,10 +49,10 @@ const main = async () => {
     console.log(util.showQuality(dlUrl));    //low quality warning
     //console.log(dlUrl);
     let cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${dlUrl}"`;
-    exec(cmdString,(err,stdout,stderr)=>{
-        if(err){
+    exec(cmdString, (err, stdout, stderr) => {
+        if (err) {
             console.error(chalk.white.bold.bgRed(err));
-        }else{
+        } else {
             console.log(stdout);
         }
     });

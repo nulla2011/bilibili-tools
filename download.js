@@ -1,8 +1,8 @@
 const spawn = require('child_process').spawn;
 const chalk = require('chalk');
 const util = require('./util.js');
-const cookie=require('./util.js').cookie;
-const dlPath=require('./util.js').settings.dlPath;
+const cookie = require('./util.js').cookie;
+const dlPath = require('./util.js').settings.dlPath;
 
 const arg = process.argv[2];
 
@@ -45,7 +45,7 @@ const main = async () => {
     for (let item of dlList) {
         let dlUrl;
         try {
-            dlUrl = await util.getPlayurl(videoInfo.aid, item.cid, cookie);
+            dlUrl = await util.getPlayurl(util.fullPlayAPIUrl(videoInfo.aid, item.cid, isDASH = false), cookie);
         } catch (e) {
             console.error(chalk.white.bold.bgRed(e));
             process.exit(1);
