@@ -3,11 +3,13 @@ const url = require('url');
 const readline = require('readline');
 const chalk = require('chalk');
 const fs = require('fs');
+const exec = require('child_process').exec;
+const spawn = require('child_process').spawn;
 
-const infoAPI = "https://api.bilibili.com/x/player/pagelist";
+const viewAPI = "https://api.bilibili.com/x/web-interface/view";
 const playurlAPI = "https://api.bilibili.com/x/player/playurl";
 const statAPI = "https://api.bilibili.com/x/web-interface/archive/stat";
-const viewAPI = "https://api.bilibili.com/x/web-interface/view";
+const infoAPI = "https://api.bilibili.com/x/player/pagelist";
 
 const qualityText = {
     120: "4K",
@@ -19,8 +21,8 @@ const qualityText = {
     32: "480P",
     16: "360P"
 };
-const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-const cookie = fs.readFileSync(settings.cookieFile, 'utf8');
+const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+const cookie = fs.readFileSync(config.cookieFile, 'utf8');
 
 const readlineSync = () => {
     const rl = readline.createInterface({
@@ -47,44 +49,12 @@ const httpGet = (options) => {
             res.on('end', () => {
                 resolve(JSON.parse(str));
             });
-            req.on('error', function (err) {
-                reject(err);
-            });
+        });
+        req.on('error', function (err) {
+            reject(err);
         });
         req.end();
     });
-};
-var input2Bv = async () => {
-    console.log("input link or BV or aid:");
-    let line = await readlineSync();
-    let bvid;
-    let av = line.match(/[aA][vV](\d+)/);
-    let avid = line.match(/^\d+$/);
-    if (av) {
-        bvid = await av2bv(av[1]);
-    } else if (avid) {
-        bvid = await av2bv(avid);
-    } else {
-        bvid = line.match(/[bB][vV]\w{10}/);
-    }
-    console.log(bvid);
-    return bvid;
-}
-var getPartinfo = async (bv) => {
-    let fullUrl = infoAPI + url.format({
-        query: {
-            bvid: bv,
-            jsonp: "jsonp"
-        }
-    });
-    let options = {
-        hostname: "api.bilibili.com",
-        port: 80,
-        path: fullUrl.replace("https://api.bilibili.com", ""),
-        method: 'GET'
-    };
-    let response = await httpGet(options);
-    return response;
 };
 var getVideoInfo = async (input) => {
     let av = input.match(/[aA][vV](\d+)/);
@@ -105,96 +75,110 @@ var getVideoInfo = async (input) => {
     if (response.code !== 0) {
         throw "code:" + response.code + " message:" + response.message;
     }
-    let info = new Object();
-    info.bvid = response.data.bvid;
-    info.aid = response.data.aid;
-    info.videos = response.data.videos;  //几个分p
-    info.title = response.data.title;
-    info.pages = [];
-    for (let item of response.data.pages) {
-        let page = new Object();
-        page.page = item.page;    //序号
-        page.cid = item.cid;
-        page.part = item.part;   //分p名
-        info.pages.push(page);
-    }
-    return info;
+    return response.data;
 };
-var fullPlayAPIUrl = (av, cid, isDASH) => {
-    return playurlAPI + url.format({
-        query: {
-            avid: av,
-            cid: cid,
-            qn: settings.bestQuality,        //quality
-            fnver: 0,
-            fnval: isDASH ? 16 : 0,
-            player: 1,
-            otype: "json"
-        }
-    });
+class Video {
+    constructor(data) {
+        this.aid = data.aid;
+        this.bvid = data.bvid;
+        this.videos = data.videos;   //几个分p
+        this.title = data.title;
+        this.pages = data.pages;
+    }
+    showTitle() {
+        console.log(chalk.bold.white(this.title));
+    }
 }
-var getPlayurl = async (url, cookie) => {
-    let options = {
-        hostname: "api.bilibili.com",
-        port: 80,
-        path: url.replace("https://api.bilibili.com", ""),
-        method: 'GET',
-        headers: {
-            'referer': 'https://www.bilibili.com/',
-            'cookie': cookie
+class Page extends Video {
+    isDASH = false;
+    constructor(vdata, pdata) {
+        super(vdata);
+        this.page = pdata.page;    //序号
+        this.cid = pdata.cid;
+        this.part = pdata.part;    //分p名
+    }
+    enableDASH() {
+        this.isDASH = true;
+    }
+    fillPlayAPIUrl() {
+        return playurlAPI + url.format({
+            query: {
+                avid: this.aid,
+                cid: this.cid,
+                qn: config.bestQuality,
+                fnver: 0,
+                fnval: this.isDASH ? 16 : 0,
+                player: 1,
+                otype: "json"
+            }
+        });
+    }
+    async getPlayurl() {
+        let options = {
+            hostname: "api.bilibili.com",
+            port: 80,
+            path: this.fillPlayAPIUrl().replace("https://api.bilibili.com", ""),
+            method: 'GET',
+            headers: {
+                'referer': 'https://www.bilibili.com/',
+                'cookie': cookie
+            }
+        };
+        let response = await httpGet(options);
+        if (response.code !== 0) {
+            throw "code:" + response.code + " message:" + response.message;
         }
+        let highestQuality = Math.max(...response.data.accept_quality);
+        let quality = response.data.quality;
+        if (quality != highestQuality) {
+            if (quality == 64) {
+                console.log(chalk.white.bold.bgRed("WARNING: cookie may be invalid"));
+            }
+            console.log(chalk.white.bold.bgRed(`WARNING: the max quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded/played is\n${qualityText[quality]}\ncontinue?(y/n)`));
+            line = await readlineSync();
+            if (line == 'n') {
+                process.exit();
+            }
+        }
+        return response.data.durl[0].url;
     };
-    let response = await httpGet(options);
-    if (response.code !== 0) {
-        throw "code:" + response.code + " message:" + response.message;
+    async play() {
+        let url = await this.getPlayurl();
+        console.log(showQuality(url));       //根据url推断清晰度更直接
+        let cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url}"`;
+        exec(cmdString, (err, stdout, stderr) => {
+            if (err) {
+                console.error(chalk.white.bold.bgRed(err));
+            } else {
+                console.log(stdout);
+            }
+        });
     }
-    let highestQuality = Math.max(...response.data.accept_quality);
-    let quality = response.data.quality;
-    if (quality != highestQuality) {
-        if (quality == 64) {
-            console.log(chalk.white.bold.bgRed("WARNING: cookie may be invalid"));
+    async download() {
+        let url = await this.getPlayurl();
+        console.log(`P${this.page}: ${showQuality(url)}`);    //low quality warning
+        let fileName = `${this.aid} - ${this.title}.flv`;
+        if (this.videos > 1) {
+            fileName = fileName.slice(0, -4) + `_p${this.page}_${this.part}.flv`;
         }
-        console.log(chalk.white.bold.bgRed(`WARNING: the max quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded/play is\n${qualityText[quality]}\ncontinue?(y/n)`));
-        line = await readlineSync();
-        if (line == 'n') {
-            process.exit();
-        }
+        var dlTask = spawn("aria2c", ['-s', '16', '-x', '16', '--check-certificate=false', '--referer=https://www.bilibili.com', url, '-d', config.dlPath, '-o', fileName]);
+        dlTask.stdout.on('data', (data) => {
+            if (data) {
+                console.log(`P${this.page}: ${data}`);
+            }
+        });
+        dlTask.stderr.on('data', (data) => {
+            console.log(`stderr: ${data}`);
+        });
+        dlTask.on("close", (code) => {
+            console.log(`child process ${this.page} exited with code ${code}`);
+        });
     }
-    return response.data.durl[0].url;
-};
-var getPlayurlDASH = async (av, cid, cookie) => {
+}
+
+var getPlayurlDASH = async (url, cookie) => {
 
 }
-var bv2av = async (bv) => {
-    let fullUrl = viewAPI + url.format({
-        query: {
-            bvid: bv
-        }
-    });
-    let options = {
-        hostname: "api.bilibili.com",
-        port: 80,
-        path: fullUrl.replace("https://api.bilibili.com", ""),
-        method: 'GET'
-    };
-    let response = await httpGet(options);
-    return response.data.aid;
-};
-var av2bv = async (av) => {
-    let fullUrl = viewAPI + url.format({
-        query: {
-            aid: av
-        }
-    });
-    let options = {
-        hostname: "api.bilibili.com",
-        port: 80,
-        path: fullUrl.replace("https://api.bilibili.com", ""),
-        method: 'GET'
-    };
-    let response = await httpGet(options);
-    return response.data.bvid;
-};
 var showQuality = (url) => {
     let q = url.match(/-(\d+)\.flv\?/)[1];
     if (q < 112) {
@@ -204,11 +188,10 @@ var showQuality = (url) => {
     }
 };
 module.exports = {
-    settings,
+    Video,
+    Page,
+    config,
     cookie,
     readlineSync,
-    getVideoInfo,
-    getPlayurl,
-    fullPlayAPIUrl,
-    showQuality
+    getVideoInfo
 }
