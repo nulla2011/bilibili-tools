@@ -21,12 +21,16 @@ const main = async () => {
         console.error(chalk.white.bold.bgRed(e));
         process.exit(1);
     }
-    let video = new Video(videoInfoData);
+    let video = new Video(videoInfoData[0]);
     let pageInfo;
     video.showTitle();
+    pageNum = videoInfoData[1];
     if (video.videos === 1) {
         pageInfo = video.pages[0];
         console.log("only 1 part, playing..");
+    } else if (pageNum) {
+        pageInfo = video.pages[pageNum - 1];
+        console.log("page number has been inputed");
     } else {
         for (let item of video.pages) {
             console.log(item.page.toString().padStart(2, '0'), item.part);
@@ -40,7 +44,7 @@ const main = async () => {
         }
         pageInfo = video.pages[inp - 1];
     }
-    let page = new Page(videoInfoData, pageInfo);
+    let page = new Page(videoInfoData[0], pageInfo);
     try {
         page.play();
     } catch (e) {

@@ -60,6 +60,9 @@ var getVideoInfo = async (input) => {
     let av = input.match(/[aA][vV](\d+)/);
     let aid = av ? av[1] : input.match(/^\d+$/);
     let bvid = input.match(/[bB][vV]\w{10}/);
+    let partFinder = input.match(/p=(\d+)/);
+    let partNum;
+    if (partFinder) { partNum = partFinder[1]; }
     if (!bvid && !aid) {
         throw "input illegal";
     }
@@ -75,7 +78,7 @@ var getVideoInfo = async (input) => {
     if (response.code !== 0) {
         throw "code:" + response.code + " message:" + response.message;
     }
-    return response.data;
+    return [response.data, partNum];
 };
 class Video {
     constructor(data) {
@@ -83,7 +86,7 @@ class Video {
         this.bvid = data.bvid;
         this.videos = data.videos;   //几个分p
         this.title = data.title;
-        this.pages = data.pages;
+        this.pages = data.pages;     //分p信息的list
     }
     showTitle() {
         console.log(chalk.bold.white(this.title));
