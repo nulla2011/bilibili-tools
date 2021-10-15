@@ -138,7 +138,7 @@ class Page extends Video {
                 console.log(chalk.white.bold.bgRed("WARNING: cookie may be invalid"));
             }
             console.log(chalk.white.bold.bgRed(`WARNING: the max quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded/played is\n${qualityText[quality]}\ncontinue?(y/n)`));
-            line = await readlineSync();
+            let line = await readlineSync();
             if (line == 'n') {
                 process.exit();
             }
@@ -164,7 +164,7 @@ class Page extends Video {
         if (this.videos > 1) {
             fileName = fileName.slice(0, -4) + `_p${this.page}_${this.part}.flv`;
         }
-        var dlTask = spawn("aria2c", ['-s', '16', '-x', '16', '--check-certificate=false', '--referer=https://www.bilibili.com', url, '-d', config.dlPath, '-o', fileName]);
+        var dlTask = spawn("aria2c", ['-s', '16', '-x', '16', '--check-certificate=false', '--continue=true', '--referer=https://www.bilibili.com', url, '-d', config.dlPath, '-o', fileName]);
         dlTask.stdout.on('data', (data) => {
             if (data) {
                 console.log(`P${this.page}: ${data}`);

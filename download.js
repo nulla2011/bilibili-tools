@@ -29,7 +29,7 @@ const main = async () => {
         dlList = video.pages;
         console.log("only 1 part, downloading..");
     } else if (pageNum) {
-        pageInfo = video.pages[pageNum - 1];
+        dlList = [video.pages[pageNum - 1]];
         console.log("page number has been inputed, downloading..");
     } else {
         for (let item of video.pages) {
