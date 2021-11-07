@@ -1,7 +1,8 @@
 const chalk = require('chalk');
 const util = require('./util.js');
-const { Video } = require('./util.js');
-const { Page } = require('./util.js');
+const { Video } = require('./core/mains.js');
+const { Page } = require('./core/mains.js');
+const mainv = require('./core/mains.js');
 
 const arg = process.argv[2];
 //temp
@@ -17,15 +18,15 @@ const main = async () => {
     }
     let videoInfoData;
     try {
-        videoInfoData = await util.getVideoInfo(line);
+        videoInfoData = await mainv.getVideoInfo(line);
     }
     catch (e) {
         console.error(chalk.white.bold.bgRed(e));
         process.exit(1);
     }
-    let video = new Video(videoInfoData[0]);
+    let video = new Video(videoInfoData);
     video.showTitle();
-    pageNum = videoInfoData[1];
+    let pageNum = mainv.getPartNum(line);
     let dlList = [];
     if (video.videos === 1) {
         dlList = video.pages;
@@ -48,7 +49,7 @@ const main = async () => {
         }
     }
     for (let pageInfo of dlList) {
-        let page = new Page(videoInfoData[0], pageInfo);
+        let page = new Page(videoInfoData, pageInfo);
         try {
             page.download();
         } catch (e) {

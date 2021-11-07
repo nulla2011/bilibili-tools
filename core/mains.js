@@ -2,15 +2,14 @@ const { httpGet } = require('../util.js');
 const { readlineSync } = require('../util.js');
 const { cookie } = require('../util.js');
 const { config } = require('../util.js');
-const url = require('url');
 const chalk = require('chalk');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
 
-const viewAPI = "https://api.bilibili.com/x/web-interface/view";
-const playurlAPI = "https://api.bilibili.com/x/player/playurl";
-const statAPI = "https://api.bilibili.com/x/web-interface/archive/stat";
-const infoAPI = "https://api.bilibili.com/x/player/pagelist";
+const viewAPI = new URL("https://api.bilibili.com/x/web-interface/view");
+const playurlAPI = new URL("https://api.bilibili.com/x/player/playurl");
+const statAPI = new URL("https://api.bilibili.com/x/web-interface/archive/stat");
+const infoAPI = new URL("https://api.bilibili.com/x/player/pagelist");
 
 const qualityText = {
     120: "4K",
@@ -23,29 +22,30 @@ const qualityText = {
     16: "360P"
 };
 
+var getPartNum = (input) => {
+    let partFinder = input.match(/p=(\d+)/);
+    if (partFinder) { return partFinder[1]; }
+}
 var getVideoInfo = async (input) => {
     let av = input.match(/[aA][vV](\d+)/);
     let aid = av ? av[1] : input.match(/^\d+$/);
     let bvid = input.match(/[bB][vV]\w{10}/);
-    let partFinder = input.match(/p=(\d+)/);
-    let partNum;
-    if (partFinder) { partNum = partFinder[1]; }
     if (!bvid && !aid) {
         throw "input illegal";
     }
-    let parameters = bvid ? { bvid: bvid } : aid ? { aid: aid } : null;
-    let fullUrl = viewAPI + url.format({ query: parameters });
+    let parameters = bvid ? ["bvid", bvid[0]] : aid ? ["aid", aid[0]] : null;
+    viewAPI.searchParams.set(...parameters);
     let options = {
-        hostname: "api.bilibili.com",
+        hostname: viewAPI.hostname,
         port: 80,
-        path: fullUrl.replace("https://api.bilibili.com", ""),
+        path: viewAPI.pathname + viewAPI.search,
         method: 'GET'
     };
     let response = await httpGet(options);
     if (response.code !== 0) {
         throw "code:" + response.code + " message:" + response.message;
     }
-    return [response.data, partNum];
+    return response.data;
 };
 class Video {
     constructor(data) {
@@ -74,23 +74,26 @@ class Page extends Video {
         this.isDASH = true;
     }
     fillPlayAPIUrl() {
-        return playurlAPI + url.format({
-            query: {
-                avid: this.aid,
-                cid: this.cid,
-                qn: config.bestQuality,
-                fnver: 0,
-                fnval: this.isDASH ? 16 : 0,
-                player: 1,
-                otype: "json"
-            }
-        });
+        let query = {
+            avid: this.aid,
+            cid: this.cid,
+            qn: config.bestQuality,
+            fnver: 0,
+            fnval: this.isDASH ? 16 : 0,
+            player: 1,
+            otype: "json"
+        }
+        for (const k in query) {
+            playurlAPI.searchParams.set(k, query[k]);
+        }
+        return playurlAPI;
     }
     async getPlayurl() {
+        let rurl = this.fillPlayAPIUrl();
         let options = {
-            hostname: "api.bilibili.com",
+            hostname: rurl.hostname,
             port: 80,
-            path: this.fillPlayAPIUrl().replace("https://api.bilibili.com", ""),
+            path: rurl.pathname + rurl.search,
             method: 'GET',
             headers: {
                 'referer': 'https://www.bilibili.com/',
@@ -164,5 +167,6 @@ var showQuality = (url) => {
 module.exports = {
     Video,
     Page,
-    getVideoInfo
+    getVideoInfo,
+    getPartNum
 }

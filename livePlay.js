@@ -21,10 +21,16 @@ const main = async () => {
         process.exit(1);
     }
     let room = new Room(roomID);
-    console.log(await room.getQualities());
-    line = await util.readlineSync();
+    await room.getQualities();
+    console.log(`available qualities:\n${room.qualities}`);
+    let inp;
+    while (true) {
+        inp = await util.readlineSync();
+        if (room.qualities.includes(inp)) { break; }
+        console.error(chalk.white.bold.bgRed("out of range"));
+    }
     try {
-        room.play(line);
+        room.play(inp);
     } catch (e) {
         console.error(chalk.white.bold.bgRed(e));
         process.exit(1);

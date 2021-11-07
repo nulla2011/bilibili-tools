@@ -11,8 +11,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\livePlay.js",
-            "args": ["43835"]
+            "program": "${workspaceFolder}\\play.js",
+            "args": ["BV1uE411a7qY"]
         }
     ]
 }

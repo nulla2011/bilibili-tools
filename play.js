@@ -2,7 +2,7 @@ const chalk = require('chalk');
 const util = require('./util.js');
 const { Video } = require('./core/mains.js');
 const { Page } = require('./core/mains.js');
-const mains = require('./core/mains.js');
+const mainv = require('./core/mains.js');
 
 const arg = process.argv[2];
 
@@ -16,16 +16,16 @@ const main = async () => {
     }
     let videoInfoData;
     try {
-        videoInfoData = await mains.getVideoInfo(line);
+        videoInfoData = await mainv.getVideoInfo(line);
     }
     catch (e) {
         console.error(chalk.white.bold.bgRed(e));
         process.exit(1);
     }
-    let video = new Video(videoInfoData[0]);
+    let video = new Video(videoInfoData);
     let pageInfo;
     video.showTitle();
-    pageNum = videoInfoData[1];
+    let pageNum = mainv.getPartNum(line);
     if (video.videos === 1) {
         pageInfo = video.pages[0];
         console.log("only 1 part, playing..");
@@ -45,7 +45,7 @@ const main = async () => {
         }
         pageInfo = video.pages[inp - 1];
     }
-    let page = new Page(videoInfoData[0], pageInfo);
+    let page = new Page(videoInfoData, pageInfo);
     try {
         page.play();
     } catch (e) {
