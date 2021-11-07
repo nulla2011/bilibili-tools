@@ -4,7 +4,9 @@ const { Video } = require('./util.js');
 const { Page } = require('./util.js');
 
 const arg = process.argv[2];
-
+//temp
+const ctitle = "SHINY COLORS 283Fes 2021 Happy Buffet![Day 1]";
+//temp
 const main = async () => {
     let line;
     if (arg == undefined) {

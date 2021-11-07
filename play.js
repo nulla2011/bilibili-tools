@@ -1,7 +1,8 @@
 const chalk = require('chalk');
 const util = require('./util.js');
-const { Video } = require('./util.js');
-const { Page } = require('./util.js');
+const { Video } = require('./core/mains.js');
+const { Page } = require('./core/mains.js');
+const mains = require('./core/mains.js');
 
 const arg = process.argv[2];
 
@@ -15,7 +16,7 @@ const main = async () => {
     }
     let videoInfoData;
     try {
-        videoInfoData = await util.getVideoInfo(line);
+        videoInfoData = await mains.getVideoInfo(line);
     }
     catch (e) {
         console.error(chalk.white.bold.bgRed(e));
