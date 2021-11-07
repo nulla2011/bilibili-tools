@@ -1,8 +1,8 @@
 const chalk = require('chalk');
 const util = require('./util.js');
-const { Video } = require('./core/mains.js');
-const { Page } = require('./core/mains.js');
-const mainv = require('./core/mains.js');
+const { Video } = require('./core/mainv.js');
+const { Page } = require('./core/mainv.js');
+const mainv = require('./core/mainv.js');
 
 const arg = process.argv[2];
 
