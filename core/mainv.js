@@ -2,7 +2,7 @@ const { httpGet } = require('../util.js');
 const { readlineSync } = require('../util.js');
 const { cookie } = require('../util.js');
 const { config } = require('../util.js');
-const chalk = require('chalk');
+const util = require('../util.js');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
 
@@ -56,7 +56,7 @@ class Video {
         this.pages = data.pages;     //分p信息的list
     }
     showTitle() {
-        console.log(chalk.bold.white(this.title));
+        util.printInfo(this.title);
     }
     setTitle(t) {
         this.title = t;
@@ -108,9 +108,9 @@ class Page extends Video {
         let quality = response.data.quality;
         if (quality != highestQuality) {
             if (quality == 64) {
-                console.log(chalk.white.bold.bgRed("WARNING: cookie may be invalid"));
+                util.printErr("WARNING: cookie may be invalid");
             }
-            console.log(chalk.white.bold.bgRed(`WARNING: the max quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded/played is\n${qualityText[quality]}\ncontinue?(y/n)`));
+            util.printErr(`WARNING: the max quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded/played is\n${qualityText[quality]}\ncontinue?(y/n)`);
             let line = await readlineSync();
             if (line == 'n') {
                 process.exit();
@@ -120,11 +120,11 @@ class Page extends Video {
     };
     async play() {
         let url = await this.getPlayurl();
-        console.log(showQuality(url));       //根据url推断清晰度更直接
+        showQuality(url);       //根据url推断清晰度更直接
         let cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url}"`;
         exec(cmdString, (err, stdout, stderr) => {
             if (err) {
-                console.error(chalk.white.bold.bgRed(err));
+                util.printErr(err);
             } else {
                 console.log(stdout);
             }
@@ -158,9 +158,9 @@ var getPlayurlDASH = async (url, cookie) => {
 var showQuality = (url) => {
     let q = url.match(/-(\d+)\.flv\?/)[1];
     if (q < 112) {
-        return chalk.white.bgHex('#909000').bold("NOT 1080P高码率 or ERROR!");
+        util.printWarn("NOT 1080P高码率 or ERROR!");
     } else {
-        return chalk.bold.white(qualityText[q]);
+        util.printInfo(qualityText[q]);
     }
 };
 

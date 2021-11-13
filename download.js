@@ -1,4 +1,3 @@
-const chalk = require('chalk');
 const util = require('./util.js');
 const { Video } = require('./core/mainv.js');
 const { Page } = require('./core/mainv.js');
@@ -17,7 +16,7 @@ const main = async (arg, title) => {
         videoInfoData = await mainv.getVideoInfo(line);
     }
     catch (e) {
-        console.error(chalk.white.bold.bgRed(e));
+        util.printErr(e);
         process.exit(1);
     }
     let video = new Video(videoInfoData);
@@ -49,7 +48,7 @@ const main = async (arg, title) => {
         try {
             page.download();
         } catch (e) {
-            console.error(chalk.white.bold.bgRed(e));
+            util.printErr(e);
         }
     }
 };

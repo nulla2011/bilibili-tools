@@ -1,4 +1,3 @@
-const chalk = require('chalk');
 const util = require('./util.js');
 const { Video } = require('./core/mainv.js');
 const { Page } = require('./core/mainv.js');
@@ -17,7 +16,7 @@ const main = async (arg) => {
         videoInfoData = await mainv.getVideoInfo(line);
     }
     catch (e) {
-        console.error(chalk.white.bold.bgRed(e));
+        util.printErr(e);
         process.exit(1);
     }
     let video = new Video(videoInfoData);
@@ -39,7 +38,7 @@ const main = async (arg) => {
         while (true) {
             inp = await util.readlineSync();
             if (!(inp > video.videos || inp < 1)) { break; }
-            console.error(chalk.white.bold.bgRed("out of range"));
+            util.printErr("out of range");
         }
         pageInfo = video.pages[inp - 1];
     }
@@ -47,7 +46,7 @@ const main = async (arg) => {
     try {
         page.play();
     } catch (e) {
-        console.error(chalk.white.bold.bgRed(e));
+        util.printErr(e);
         process.exit(1);
     }
 }

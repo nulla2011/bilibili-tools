@@ -1,6 +1,11 @@
 const http = require('http');
 const readline = require('readline');
 const fs = require('fs');
+try {
+    var chalk = require('chalk');
+} catch (error) {
+    chalk = null;
+}
 
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 const cookie = fs.readFileSync(config.cookieFile, 'utf8');
@@ -37,10 +42,34 @@ const httpGet = (options) => {
         req.end();
     });
 };
+const printErr = (t) => {
+    if (chalk) {
+        console.error(chalk.white.bold.bgRed(t));
+    } else {
+        console.error(t);
+    }
+}
+const printWarn=(t)=>{
+    if (chalk) {
+        console.error(chalk.white.bgHex('#909000').bold(t));
+    } else {
+        console.error(t);
+    }
+}
+const printInfo=(t)=>{
+    if (chalk) {
+        console.error(chalk.white.bold(t));
+    } else {
+        console.error(t);
+    }
+}
 
 module.exports = {
     config,
     cookie,
     readlineSync,
-    httpGet
+    httpGet,
+    printErr,
+    printWarn,
+    printInfo
 }

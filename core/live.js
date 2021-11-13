@@ -1,7 +1,6 @@
 const { httpGet } = require('../util.js');
-const { readlineSync } = require('../util.js');
 const { config } = require('../util.js');
-const chalk = require('chalk');
+const util=require('../util.js');
 const exec = require('child_process').exec;
 
 const playAPI = new URL("https://api.live.bilibili.com/room/v1/Room/playUrl");
@@ -90,7 +89,7 @@ class Room {
         let cmdString = `mpv "${url}"`;
         exec(cmdString, (err, stdout, stderr) => {
             if (err) {
-                console.error(chalk.white.bold.bgRed(err));
+                util.printErr(err);
             } else {
                 console.log(stdout);
             }

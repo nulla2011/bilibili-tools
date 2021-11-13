@@ -12,7 +12,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\btools.js",
-            "args": ["-l","14055253","-q","4"]
+            "args": ["-l","111345"]
         }
     ]
 }
