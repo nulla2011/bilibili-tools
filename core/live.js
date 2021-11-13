@@ -24,12 +24,14 @@ class Room {
         this.title;
         this.live_time;      //开播时间
         this.parent_area_name;
+        this.area_name;
+        this.isHLS = config.liveHlS;
     }
     fillPlayAPIUrl(quality) {
         let query = {
             cid: this.id,
             quality: quality,
-            platform: config.liveHlS ? "h5" : "web"  //选h5有可能是hls，选web好像全是flv
+            platform: this.isHLS ? "h5" : "web"  //选h5有可能是hls，选web好像全是flv
         }
         for (const k in query) {
             playAPI.searchParams.set(k, query[k]);
@@ -81,6 +83,7 @@ class Room {
         this.title = response.data.title;
         this.live_time = response.data.live_time;
         this.parent_area_name = response.data.parent_area_name;
+        this.area_name = response.data.area_name;
     }
     async play(quality) {
         let url = await this.getPlayurl(quality);

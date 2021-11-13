@@ -4,11 +4,7 @@ const { Video } = require('./core/mainv.js');
 const { Page } = require('./core/mainv.js');
 const mainv = require('./core/mainv.js');
 
-const arg = process.argv[2];
-//temp
-const ctitle = "SHINY COLORS 283Fes 2021 Happy Buffet![Day 1]";
-//temp
-const main = async () => {
+const main = async (arg, title) => {
     let line;
     if (arg == undefined) {
         console.log("input link or BV or aid:");
@@ -58,4 +54,8 @@ const main = async () => {
     }
 };
 
-main();
+if (require.main === module) {
+    main(process.argv[2]);
+} else {
+    module.exports = { main }
+}

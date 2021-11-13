@@ -4,9 +4,7 @@ const { Video } = require('./core/mainv.js');
 const { Page } = require('./core/mainv.js');
 const mainv = require('./core/mainv.js');
 
-const arg = process.argv[2];
-
-const main = async () => {
+const main = async (arg) => {
     let line;
     if (arg == undefined) {
         console.log("input link or BV or aid:");
@@ -54,4 +52,8 @@ const main = async () => {
     }
 }
 
-main();
+if (require.main === module) {
+    main(process.argv[2]);
+} else {
+    module.exports = { main }
+}

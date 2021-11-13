@@ -11,8 +11,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\play.js",
-            "args": ["BV1uE411a7qY"]
+            "program": "${workspaceFolder}\\btools.js",
+            "args": ["-l","14055253","-q","4"]
         }
     ]
 }
