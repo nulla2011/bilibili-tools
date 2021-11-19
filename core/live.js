@@ -8,7 +8,7 @@ const infoAPI = new URL("https://api.live.bilibili.com/room/v1/Room/get_info");
 
 var getRoomID = (input) => {
     let m = input.match(/^\d+$/);
-    let RoomID = m ? m : input.match(/live\.bilibili\.com\/(\d+)/)[1];
+    let RoomID = m ? m[0] : input.match(/live\.bilibili\.com\/(\d+)/)[1];
     if (!RoomID) {
         throw "input illegal";
     }

@@ -5,7 +5,7 @@
 ## 依赖
 
 ```
-npm install chalk
+npm install Erii
 ```
 
 * aria2

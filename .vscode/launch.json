@@ -12,7 +12,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\btools.js",
-            "args": ["-l","111345"]
+            "args": ["-p","https://www.bilibili.com/video/av548987053"]
         }
     ]
 }

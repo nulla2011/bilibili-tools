@@ -27,13 +27,13 @@ var getPartNum = (input) => {
     if (partFinder) { return partFinder[1]; }
 }
 var getVideoInfo = async (input) => {
-    let av = input.match(/[aA][vV](\d+)/);
-    let aid = av ? av[1] : input.match(/^\d+$/);
-    let bvid = input.match(/[bB][vV]\w{10}/);
-    if (!bvid && !aid) {
+    let mav = input.match(/[aA][vV](\d+)/);
+    let maid = mav ? mav : input.match(/^(\d+)$/);
+    let mbvid = input.match(/[bB][vV]\w{10}/);
+    if (!mbvid && !maid) {
         throw "input illegal";
     }
-    let parameters = bvid ? ["bvid", bvid[0]] : aid ? ["aid", aid[0]] : null;
+    let parameters = mbvid ? ["bvid", mbvid[0]] : maid ? ["aid", maid[1]] : null;
     viewAPI.searchParams.set(...parameters);
     let options = {
         hostname: viewAPI.hostname,

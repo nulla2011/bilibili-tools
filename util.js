@@ -1,14 +1,12 @@
 const http = require('http');
 const readline = require('readline');
 const fs = require('fs');
+let chalk;
 try {
-    var chalk = require('chalk');
+    chalk = require('chalk');
 } catch (error) {
     chalk = null;
 }
-
-const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
-const cookie = fs.readFileSync(config.cookieFile, 'utf8');
 
 const readlineSync = () => {
     const rl = readline.createInterface({
@@ -49,18 +47,52 @@ const printErr = (t) => {
         console.error(t);
     }
 }
-const printWarn=(t)=>{
+const printWarn = (t) => {
     if (chalk) {
         console.error(chalk.white.bgHex('#909000').bold(t));
     } else {
         console.error(t);
     }
 }
-const printInfo=(t)=>{
+const printInfo = (t) => {
     if (chalk) {
         console.error(chalk.white.bold(t));
     } else {
         console.error(t);
+    }
+}
+
+let config,cookie;
+try {
+    config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+} catch (error) {
+    if (error.code == "ENOENT") {
+        printErr("No conifig file, creating..");
+        try {
+            fs.copyFileSync("config.json", "config.json.old");
+        } finally {
+            fs.copyFileSync("config-example.json", "config.json");
+            console.log("Create complete! Please edit config.json");
+            process.exit(0);
+        }
+    } else {
+        printErr("Unknown error");
+    }
+}
+try {
+    cookie = fs.readFileSync(config.cookieFile, 'utf8');
+} catch (error) {
+    if (error.code == "ENOENT") {
+        printErr("No cookie file, creating..");
+        try {
+            fs.copyFileSync(config.cookieFile, `${config.cookieFile}.old`);
+        } finally {
+            fs.writeFileSync(config.cookieFile, "");
+            console.log("Create complete! Please edit cookies.ck");
+            process.exit(0);
+        }
+    } else {
+        printErr("Unknown error");
     }
 }
 
