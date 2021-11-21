@@ -1,3 +1,4 @@
 node_modules
 *.ck
 config.json
+*.flv

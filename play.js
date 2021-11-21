@@ -3,13 +3,13 @@ const { Video } = require('./core/mainv.js');
 const { Page } = require('./core/mainv.js');
 const mainv = require('./core/mainv.js');
 
-const main = async (arg) => {
+const main = async (input, dash = false, videoOn = 1, audioOn = 1) => {
     let line;
-    if (arg == undefined) {
+    if (input == undefined) {
         console.log("input link or BV or aid:");
         line = await util.readlineSync();
     } else {
-        line = arg;
+        line = input;
     }
     let videoInfoData;
     try {
@@ -43,8 +43,11 @@ const main = async (arg) => {
         pageInfo = video.pages[inp - 1];
     }
     let page = new Page(videoInfoData, pageInfo);
+    if (dash) {
+        page.enableDASH();
+    }
     try {
-        page.play();
+        page.play(videoOn, audioOn);
     } catch (e) {
         util.printErr(e);
         process.exit(1);

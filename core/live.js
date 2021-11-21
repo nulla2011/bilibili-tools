@@ -1,6 +1,6 @@
 const { httpGet } = require('../util.js');
 const { config } = require('../util.js');
-const util=require('../util.js');
+const util = require('../util.js');
 const exec = require('child_process').exec;
 
 const playAPI = new URL("https://api.live.bilibili.com/room/v1/Room/playUrl");
@@ -87,7 +87,7 @@ class Room {
     async play(quality) {
         let url = await this.getPlayurl(quality);
         let cmdString = `mpv "${url}"`;
-        exec(cmdString, (err, stdout, stderr) => {
+        exec(cmdString, { maxBuffer: 1024 * 500 }, (err, stdout, stderr) => {
             if (err) {
                 util.printErr(err);
             } else {

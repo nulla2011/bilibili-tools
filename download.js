@@ -3,13 +3,13 @@ const { Video } = require('./core/mainv.js');
 const { Page } = require('./core/mainv.js');
 const mainv = require('./core/mainv.js');
 
-const main = async (arg, title) => {
+const main = async (input, path = util.config.dlPath, title, dash = false, videoOn = 1, audioOn = 1) => {
     let line;
-    if (arg == undefined) {
+    if (input == undefined) {
         console.log("input link or BV or aid:");
         line = await util.readlineSync();
     } else {
-        line = arg;
+        line = input;
     }
     let videoInfoData;
     try {
@@ -45,8 +45,11 @@ const main = async (arg, title) => {
     }
     for (let pageInfo of dlList) {
         let page = new Page(videoInfoData, pageInfo);
+        if (dash) {
+            page.enableDASH();
+        }
         try {
-            page.download();
+            page.download(path, videoOn, audioOn);
         } catch (e) {
             util.printErr(e);
         }

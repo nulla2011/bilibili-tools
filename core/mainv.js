@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { httpGet } = require('../util.js');
 const { readlineSync } = require('../util.js');
 const { cookie } = require('../util.js');
@@ -21,12 +22,13 @@ const qualityText = {
     32: "480P",
     16: "360P"
 };
+const aria2Args = ['-s', '16', '-x', '16', '--check-certificate=false', '--continue=true', '--referer=https://www.bilibili.com'];
 
-var getPartNum = (input) => {
+let getPartNum = (input) => {
     let partFinder = input.match(/p=(\d+)/);
     if (partFinder) { return partFinder[1]; }
 }
-var getVideoInfo = async (input) => {
+let getVideoInfo = async (input) => {
     let mav = input.match(/[aA][vV](\d+)/);
     let maid = mav ? mav : input.match(/^(\d+)$/);
     let mbvid = input.match(/[bB][vV]\w{10}/);
@@ -54,6 +56,7 @@ class Video {
         this.videos = data.videos;   //几个分p
         this.title = data.title;
         this.pages = data.pages;     //分p信息的list
+        this.isDASH;
     }
     showTitle() {
         util.printInfo(this.title);
@@ -116,12 +119,35 @@ class Page extends Video {
                 process.exit();
             }
         }
-        return response.data.durl[0].url;
-    };
-    async play() {
+        if (this.isDASH) {
+            let vUrl = response.data.dash.video.find(element => element.id == quality).baseUrl;
+            let audioBestQuality = response.data.dash.audio.sort((a, b) => b.id - a.id)[0];
+            util.printInfo(`audio quility: ${audioBestQuality.id}`);
+            return [vUrl, audioBestQuality.baseUrl];
+        } else {
+            return response.data.durl[0].url;
+        }
+    }
+    async play(videoOn = 1, audioOn = 1) {
         let url = await this.getPlayurl();
-        showQuality(url);       //根据url推断清晰度更直接
-        let cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url}"`;
+        showQuality(url, this.isDASH); //根据url推断清晰度更直接
+        let cmdString;
+        if (this.isDASH) {
+            switch (videoOn + audioOn) {
+                case 2:
+                    cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url[0]}" --audio-file="${url[1]}"`;
+                    break;
+                case 1:
+                    cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url[videoOn == 1 ? 0 : (audioOn == 1 ? 1 : null)]}"`;
+                    break;
+                default:
+                    util.printErr("video and audio are all off!");
+                    process.exit();
+                    break;
+            }
+        } else {
+            cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url}"`;
+        }
         exec(cmdString, (err, stdout, stderr) => {
             if (err) {
                 util.printErr(err);
@@ -130,14 +156,33 @@ class Page extends Video {
             }
         });
     }
-    async download() {
+    async download(path, videoOn = 1, audioOn = 1) {
         let url = await this.getPlayurl();
-        console.log(`P${this.page}: ${showQuality(url)}`);    //low quality warning
+        console.log(`P${this.page}: `);    //low quality warning
+        showQuality(url, this.isDASH);
         let fileName = `${this.aid} - ${this.title}.flv`;
         if (this.videos > 1) {
             fileName = fileName.slice(0, -4) + `_p${this.page}_${this.part}.flv`;
         }
-        var dlTask = spawn("aria2c", ['-s', '16', '-x', '16', '--check-certificate=false', '--continue=true', '--referer=https://www.bilibili.com', url, '-d', config.dlPath, '-o', fileName]);
+        let dlTask;
+        if (this.isDASH) {
+            switch (videoOn + audioOn) {
+                case 2:
+                    console.log("还没写，话说为什么要用这种方法下载呢？");
+                    process.exit();
+                    break;
+                case 1:
+                    fileName = fileName.slice(0, -4) + `_${videoOn == 1 ? "video.mp4" : (audioOn == 1 ? "audio.m4s" : null)}`;
+                    dlTask = spawn("aria2c", aria2Args.concat([url[videoOn == 1 ? 0 : (audioOn == 1 ? 1 : null)], '-d', path, '-o', fileName]));
+                    break;
+                default:
+                    util.printErr("video and audio are all off!");
+                    process.exit();
+                    break;
+            }
+        } else {
+            dlTask = spawn("aria2c", aria2Args.concat([url, '-d', path, '-o', fileName]));
+        }
         dlTask.stdout.on('data', (data) => {
             if (data) {
                 console.log(`P${this.page}: ${data}`);
@@ -148,15 +193,28 @@ class Page extends Video {
         });
         dlTask.on("close", (code) => {
             console.log(`child process ${this.page} exited with code ${code}`);
+            if (audioOn && !videoOn) {
+                console.log("transcoding...");
+                exec(`ffmpeg -i "${path + "/" + fileName}" -c:a copy "${path + "/" + fileName.slice(0, -4) + ".m4a"}"`, (err, stdout, stderr) => {
+                    if (err) {
+                        util.printErr(err);
+                    } else {
+                        console.log(stdout);
+                        fs.unlinkSync(`${path}/${fileName}`);
+                    }
+                });
+            }
         });
     }
 }
 
-var getPlayurlDASH = async (url, cookie) => {
-
-}
-var showQuality = (url) => {
-    let q = url.match(/-(\d+)\.flv\?/)[1];
+let showQuality = (url, isDash) => {
+    let q;
+    if (isDash) {
+        q = url[0].match(/-30+(\d+)\.m4s\?/)[1];
+    } else {
+        q = url.match(/-(\d+)\.flv\?/)[1];
+    }
     if (q < 112) {
         util.printWarn("NOT 1080P高码率 or ERROR!");
     } else {
