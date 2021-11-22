@@ -2,6 +2,7 @@ const Erii = require('erii').default;
 const download = require('./download.js').main;
 const play = require('./play.js').main;
 const livePlay = require('./livePlay.js').main;
+const abv = require('./abv.js');
 
 Erii.setMetaInfo({
     version: "0.0.1",
@@ -74,6 +75,30 @@ Erii.addOption({
         name: "quality",
         description: "quality number"
     }
+});
+Erii.bind({
+    name: ["av2bv", "a2b"],
+    description: "trans av to bv",
+    argument: {
+        name: "input",
+        description: "input"
+    }
+}, (ctx) => {
+    n = ctx.getArgument().toString();
+    if (n.toLowerCase().startsWith("av")) {
+        n = n.slice(2);
+    }
+    console.log(abv.encode(n));
+});
+Erii.bind({
+    name: ["bv2av", "b2a"],
+    description: "trans bv to av",
+    argument: {
+        name: "input",
+        description: "input"
+    }
+}, (ctx) => {
+    console.log(abv.decode(ctx.getArgument().toString()));
 });
 
 Erii.default(() => {

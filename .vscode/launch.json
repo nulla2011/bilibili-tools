@@ -11,8 +11,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\btools.js",
-            "args": ["-d","BV1zr4y1k7by", "-o", "D:/desktop", "-a"]
+            "program": "${workspaceFolder}\\abv.js",
+            "args": []
         }
     ]
 }
