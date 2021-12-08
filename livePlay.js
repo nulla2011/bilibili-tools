@@ -20,8 +20,8 @@ const main = async (arg, isHLS, quality) => {
     let room = new Room(roomID);
     try {
         await room.getInfo();
-    } catch (error) {
-        util.printErr(error);
+    } catch (e) {
+        util.printErr(e);
         process.exit(1);
     }
     util.printInfo(`标题：${room.title}\n人气：${room.online}\n开播时间：${room.live_time}\n分区：${room.parent_area_name} - ${room.area_name}`);

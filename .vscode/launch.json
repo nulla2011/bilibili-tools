@@ -11,8 +11,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\abv.js",
-            "args": []
+            "program": "${workspaceFolder}\\btools.js",
+            "args": ["-d","https://www.bilibili.com/video/BV1Nq4y1g7JQ?p=2"]
         }
     ]
 }

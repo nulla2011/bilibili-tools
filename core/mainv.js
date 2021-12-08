@@ -29,9 +29,9 @@ let getPartNum = (input) => {
     if (partFinder) { return partFinder[1]; }
 }
 let getVideoInfo = async (input) => {
-    let mav = input.match(/[aA][vV](\d+)/);
+    let mav = input.match(/(?:^|(?<=\/))[aA][vV](\d+)/);
     let maid = mav ? mav : input.match(/^(\d+)$/);
-    let mbvid = input.match(/[bB][vV]\w{10}/);
+    let mbvid = input.match(/(?:^|(?<=\/))[bB][vV][1-9a-km-zA-HJ-NP-Z]{10}/);
     if (!mbvid && !maid) {
         throw "input illegal";
     }
@@ -56,7 +56,6 @@ class Video {
         this.videos = data.videos;   //几个分p
         this.title = data.title;
         this.pages = data.pages;     //分p信息的list
-        this.isDASH;
     }
     showTitle() {
         util.printInfo(this.title);
@@ -66,12 +65,12 @@ class Video {
     }
 }
 class Page extends Video {
-    isDASH = false;
     constructor(vdata, pdata) {
         super(vdata);
         this.page = pdata.page;    //序号
         this.cid = pdata.cid;
         this.part = pdata.part;    //分p名
+        this.isDASH = false;
     }
     enableDASH() {
         this.isDASH = true;
@@ -121,8 +120,8 @@ class Page extends Video {
         }
         if (this.isDASH) {
             let vUrl = response.data.dash.video.find(element => element.id == quality).baseUrl;
-            let audioBestQuality = response.data.dash.audio.sort((a, b) => b.id - a.id)[0];
-            util.printInfo(`audio quility: ${audioBestQuality.id}`);
+            let audioBestQuality = response.data.dash.audio.reduce((max, cur) => (cur.id > max.id) ? cur : max);
+            util.printInfo(`audio quality: ${audioBestQuality.id}`);
             return [vUrl, audioBestQuality.baseUrl];
         } else {
             return response.data.durl[0].url;
@@ -130,6 +129,7 @@ class Page extends Video {
     }
     async play(videoOn = 1, audioOn = 1) {
         let url = await this.getPlayurl();
+        console.log(url);
         showQuality(url, this.isDASH); //根据url推断清晰度更直接
         let cmdString;
         if (this.isDASH) {
@@ -213,9 +213,10 @@ let showQuality = (url, isDash) => {
     if (isDash) {
         q = url[0].match(/-30+(\d+)\.m4s\?/)[1];
     } else {
-        q = url.match(/-(\d+)\.flv\?/)[1];
+        q = url.match(/-(\d+)\.(?:flv|mp4)\?/)[1];
     }
     if (q < 112) {
+        util.printInfo(qualityText[q]);
         util.printWarn("NOT 1080P高码率 or ERROR!");
     } else {
         util.printInfo(qualityText[q]);

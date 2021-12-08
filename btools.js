@@ -5,7 +5,7 @@ const livePlay = require('./livePlay.js').main;
 const abv = require('./abv.js');
 
 Erii.setMetaInfo({
-    version: "0.0.1",
+    version: "0.1.0",
     name: "bilibili tools"
 });
 
@@ -40,13 +40,18 @@ Erii.bind({
     }
 }, (ctx, options) => {
     let dash = options.dash;
+    let video = options.video ? 1 : 0;
+    let audio = options.audio ? 1 : 0;
+    if (options.dash && !((options.video || options.audio))) {
+        [video, audio] = [1, 1];
+    }
     if (options.video || options.audio) {
         dash = true;
     }
-    play(ctx.getArgument().toString(), dash, options.video ? 1 : 0, options.audio ? 1 : 0);
+    play(ctx.getArgument().toString(), dash, video, audio);
 });
 Erii.addOption({
-    name: ["dash", "d"]
+    name: ["dash", "4"]
 });
 Erii.addOption({
     name: ["video", "v"]

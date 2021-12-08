@@ -17,13 +17,6 @@ var getRoomID = (input) => {
 class Room {
     constructor(ID) {
         this.id = ID;
-        this.qualities;
-        this.online;        //人气
-        this.live_status;    //播没播
-        this.title;
-        this.live_time;      //开播时间
-        this.parent_area_name;
-        this.area_name;
         this.isHLS = config.liveHlS;
     }
     fillPlayAPIUrl(quality) {
@@ -60,7 +53,7 @@ class Room {
     }
     async getPlayurl(quality) {
         let response = await this.sendRequset2PlayAPI(quality);
-        return response.data.durl[0].url;
+        this.playUrl = response.data.durl[0].url;
     }
     async getInfo() {
         infoAPI.searchParams.set("room_id", this.id)
@@ -77,16 +70,17 @@ class Room {
         if (response.code !== 0) {
             throw "code:" + response.code + " message:" + response.message;
         }
-        this.online = response.data.online;
-        this.live_status = response.data.live_status;
+        this.online = response.data.online;    //人气
+        this.live_status = response.data.live_status;   //播没播
         this.title = response.data.title;
-        this.live_time = response.data.live_time;
+        this.live_time = response.data.live_time;     //开播时间
         this.parent_area_name = response.data.parent_area_name;
         this.area_name = response.data.area_name;
     }
     async play(quality) {
-        let url = await this.getPlayurl(quality);
-        let cmdString = `mpv "${url}"`;
+        await this.getPlayurl(quality);
+        // console.log(this.playUrl);
+        let cmdString = `mpv "${this.playUrl}"`;
         exec(cmdString, { maxBuffer: 1024 * 500 }, (err, stdout, stderr) => {
             if (err) {
                 util.printErr(err);
