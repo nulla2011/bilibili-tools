@@ -22,6 +22,14 @@ const qualityText = {
     32: "480P",
     16: "360P"
 };
+const hevcUrlQualityText = {
+    106: "1080P60",
+    102: "1080P 高码率",
+    77: "1080P",
+    66: "720P",
+    33: "480P",
+    11: "360P"
+}
 const aria2Args = ['-s', '16', '-x', '16', '--check-certificate=false', '--continue=true', '--referer=https://www.bilibili.com'];
 
 let getPartNum = (input) => {
@@ -60,9 +68,6 @@ class Video {
     showTitle() {
         util.printInfo(this.title);
     }
-    setTitle(t) {
-        this.title = t;
-    }
 }
 class Page extends Video {
     constructor(vdata, pdata) {
@@ -71,9 +76,13 @@ class Page extends Video {
         this.cid = pdata.cid;
         this.part = pdata.part;    //分p名
         this.isDASH = false;
+        this.isHevc = false;
     }
     enableDASH() {
         this.isDASH = true;
+    }
+    enableHevc() {
+        this.isHevc = true;
     }
     fillPlayAPIUrl() {
         let query = {
@@ -81,7 +90,7 @@ class Page extends Video {
             cid: this.cid,
             qn: config.bestQuality,
             fnver: 0,
-            fnval: this.isDASH ? 16 : 0,
+            fnval: this.isDASH ? 16 : 0,      //有其他选项(https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/video/videostream_url.md#fnval%E8%A7%86%E9%A2%91%E6%B5%81%E6%A0%BC%E5%BC%8F%E6%A0%87%E8%AF%86)
             player: 1,
             otype: "json"
         }
@@ -119,7 +128,8 @@ class Page extends Video {
             }
         }
         if (this.isDASH) {
-            let vUrl = response.data.dash.video.find(element => element.id == quality).baseUrl;
+            let vQualityMatch = response.data.dash.video.filter(element => element.id == quality);
+            let vUrl = vQualityMatch.find(el => el.codecs.startsWith(this.isHevc ? 'hev' : 'avc')).baseUrl;
             let audioBestQuality = response.data.dash.audio.reduce((max, cur) => (cur.id > max.id) ? cur : max);
             util.printInfo(`audio quality: ${audioBestQuality.id}`);
             return [vUrl, audioBestQuality.baseUrl];

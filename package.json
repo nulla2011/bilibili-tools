@@ -1,0 +1,29 @@
+{
+  "name": "bilibili-tools",
+  "version": "0.0.1",
+  "description": "**添加cookie 获取更高画质**",
+  "main": "btools.js",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "erii": "^2.0.3"
+  },
+  "optionalDependencies": {
+    "chalk": "^2.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nulla2011/bilibili-download.git"
+  },
+  "author": "nulla",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nulla2011/bilibili-download/issues"
+  },
+  "homepage": "https://github.com/nulla2011/bilibili-download#readme"
+}

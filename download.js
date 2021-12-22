@@ -45,6 +45,13 @@ const main = async (input, path = util.config.dlPath, title, dash = false, video
     }
     for (let pageInfo of dlList) {
         let page = new Page(videoInfoData, pageInfo);
+        if (title) {
+            console.log(`change title to ${title}, continue? (y/n)`);
+            line = await util.readlineSync();
+            if (line == 'y') {
+                page.title = title;
+            }
+        }
         if (dash) {
             page.enableDASH();
         }

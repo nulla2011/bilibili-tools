@@ -3,7 +3,7 @@ const { Video } = require('./core/mainv.js');
 const { Page } = require('./core/mainv.js');
 const mainv = require('./core/mainv.js');
 
-const main = async (input, dash = false, videoOn = 1, audioOn = 1) => {
+const main = async (input, dash = false, videoOn = 1, audioOn = 1, hevc = false) => {
     let line;
     if (input == undefined) {
         console.log("input link or BV or aid:");
@@ -45,6 +45,9 @@ const main = async (input, dash = false, videoOn = 1, audioOn = 1) => {
     let page = new Page(videoInfoData, pageInfo);
     if (dash) {
         page.enableDASH();
+        if (hevc) {
+            page.enableHevc();
+        }
     }
     try {
         page.play(videoOn, audioOn);

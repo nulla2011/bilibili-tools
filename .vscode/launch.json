@@ -12,7 +12,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\btools.js",
-            "args": ["-d","https://www.bilibili.com/video/BV1Nq4y1g7JQ?p=2"]
+            "args": ["-d","https://www.bilibili.com/video/BV1CF411q7Aj?p=5","-t","シャイニーカラーズ Xmas Party -Silent night-"]
         }
     ]
 }

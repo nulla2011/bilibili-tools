@@ -31,6 +31,14 @@ Erii.addOption({
         description: "input download path"
     }
 });
+Erii.addOption({
+    name: ["title", "t"],
+    command: "download",
+    argument: {
+        name: "title",
+        description: "input file name"
+    }
+});
 Erii.bind({
     name: ["play", "p"],
     description: "play video",
@@ -42,13 +50,16 @@ Erii.bind({
     let dash = options.dash;
     let video = options.video ? 1 : 0;
     let audio = options.audio ? 1 : 0;
-    if (options.dash && !((options.video || options.audio))) {
+    if ((options.dash || options.hevc) && !(options.video || options.audio)) {
         [video, audio] = [1, 1];
     }
     if (options.video || options.audio) {
         dash = true;
     }
-    play(ctx.getArgument().toString(), dash, video, audio);
+    if (options.hevc) {
+        dash = true;
+    }
+    play(ctx.getArgument().toString(), dash, video, audio, options.hevc);
 });
 Erii.addOption({
     name: ["dash", "4"]
@@ -58,6 +69,9 @@ Erii.addOption({
 });
 Erii.addOption({
     name: ["audio", "a"]
+});
+Erii.addOption({
+    name: ["hevc"]
 });
 Erii.bind({
     name: ["liveplay", "l"],

@@ -40,29 +40,50 @@ const httpGet = (options) => {
         req.end();
     });
 };
+const timeout = (delay = 300) => {
+    return new Promise(resolve => setTimeout(resolve, delay));
+};
+const alarm = async () => {
+    process.stdout.write('\x07');
+    timeout().then(() => {
+        process.stdout.write('\x07');
+        return timeout();
+    }).then(() => {
+        process.stdout.write('\x07');
+        return timeout(2000);
+    }).then(() => {
+        process.stdout.write('\x07');
+        return timeout();
+    }).then(() => {
+        process.stdout.write('\x07');
+        return timeout();
+    }).then(() => {
+        process.stdout.write('\x07');
+    });
+};
 const printErr = (t) => {
     if (chalk) {
         console.error(chalk.white.bold.bgRed(t));
     } else {
         console.error(t);
     }
-}
+};
 const printWarn = (t) => {
     if (chalk) {
-        console.error(chalk.white.bgHex('#909000').bold(t));
+        console.log(chalk.white.bgHex('#909000').bold(t));
     } else {
-        console.error(t);
+        console.log(t);
     }
-}
+};
 const printInfo = (t) => {
     if (chalk) {
-        console.error(chalk.white.bold(t));
+        console.log(chalk.white.bold(t));
     } else {
-        console.error(t);
+        console.log(t);
     }
-}
+};
 
-let config,cookie;
+let config, cookie;
 try {
     config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 } catch (error) {
@@ -70,7 +91,7 @@ try {
         printErr("No conifig file, creating..");
         try {
             fs.copyFileSync("config.json", "config.json.old");
-        } finally {
+        } catch (e) { } finally {
             fs.copyFileSync("config-example.json", "config.json");
             console.log("Create complete! Please edit config.json");
             process.exit(0);
@@ -86,7 +107,7 @@ try {
         printErr("No cookie file, creating..");
         try {
             fs.copyFileSync(config.cookieFile, `${config.cookieFile}.old`);
-        } finally {
+        } catch (e) { } finally {
             fs.writeFileSync(config.cookieFile, "");
             console.log("Create complete! Please edit cookies.ck");
             process.exit(0);
@@ -103,5 +124,6 @@ module.exports = {
     httpGet,
     printErr,
     printWarn,
-    printInfo
+    printInfo,
+    alarm
 }

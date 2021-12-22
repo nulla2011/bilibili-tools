@@ -18,6 +18,14 @@ npm install Erii
 
 播放视频运行play.js ，需要mpv
 
+dist/monitor-video-change.js:
+
+监测稿件变化，建议配合pm2使用
+
+```
+pm2 start dist/monitor-video-change.js -- <av号或bv号或链接>
+```
+
 ## todo
 
-推流以及DASH的播放和下载
+推流
