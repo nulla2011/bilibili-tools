@@ -1,9 +1,8 @@
 import { getVideoInfo } from '../core/mainv.js';
 import * as fs from 'fs';
-import * as util from "../util.js";
-import { exec } from "child_process";
+import notifier from 'node-notifier';
 
-const interval = 1 * 60 * 60 * 1000;
+const interval = 8 * 1000;
 interface videoDataForCompare {
   aid: number;
   videos: number;
@@ -14,7 +13,20 @@ interface videoDataForCompare {
   cids: number[];
 }
 const getInfo = async (input: string) => {
-  let d = await getVideoInfo(input);
+  let d;
+  try {
+    d = await getVideoInfo(input);
+  } catch (error) {
+    console.error(error);
+    notifier.notify(
+      {
+        title: "get info error!",
+        message: "get info error!",
+        sound: true
+      }, (error, response) => {
+        process.exit(0);
+      });
+  }
   let result: videoDataForCompare = {
     aid: d.aid,
     videos: d.videos,
@@ -41,6 +53,31 @@ const compare = (a: videoDataForCompare, b: videoDataForCompare): boolean => {
   }
   return true;
 }
+const diff = (a: videoDataForCompare, b: videoDataForCompare) => {
+  for (const k in a) {
+    if (Array.isArray(a[k])) {
+      let isChanged = false;
+      if (a[k].length != a[k].length) {
+        isChanged = true;
+      }
+      isChanged = isChanged || !(a[k].every(i => a[k][i] === b[k][i]));
+      if (isChanged) {
+        console.log(`分p: ${a[k]} -> ${b[k]}`);
+      }
+    } else {
+      if (a[k] !== b[k]) {
+        console.log(`${k}: ${a[k]} -> ${b[k]}`);
+      }
+    }
+  }
+}
+const notifyChange = (text: string) => {
+  notifier.notify({
+    title: "Video changed!",
+    message: text,
+    sound: true
+  });
+}
 const main = async (input: string) => {
   let info = await getInfo(input);
   let oldInfo: videoDataForCompare;
@@ -61,21 +98,28 @@ const main = async (input: string) => {
     }
   }
   if (!compare(info, oldInfo)) {
-    console.log("changed!");
-    util.alarm();
-    exec(`msg %username% "video ${info.title} changed!"`);
+    let currentTime = new Date().toString().replace(' (中国标准时间)', '').slice(4);
+    console.log(`[${currentTime}] 「${info.aid}-${info.title}」 changed!`);
+    console.log(diff(oldInfo, info));
+    notifyChange(`${info.aid}-${info.title} changed!`);
+    // util.alarm();
+    // exec(`msg %username% "video ${info.title} changed!"`);
+
   }
   fs.writeFileSync(`./cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
   setInterval(async () => {
     oldInfo = JSON.parse(fs.readFileSync(`./cache/videoinfo-${info.aid}.json`, 'utf-8'));
     info = await getInfo(input);
+    let currentTime = new Date().toString().replace(' (中国标准时间)', '').slice(4);
     if (!compare(info, oldInfo)) {
-      console.log("changed!");
-      util.alarm();
-      exec(`msg %username% "video ${info.title} changed!"`);
+      console.log(`!!![${currentTime}] 「${info.aid}-${info.title}」 changed!`);
+      console.log(diff(oldInfo, info));
+      notifyChange(`${info.aid}-${info.title} changed!`);
+      // util.alarm();
+      // exec(`msg %username% "video ${info.title} changed!"`);
     }
     else {
-      console.log("no change");
+      console.log(`[${currentTime}] 「${info.title}」 no change`);
     }
     fs.writeFileSync(`cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
   }, interval);

@@ -27,14 +27,29 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mainv_js_1 = require("../core/mainv.js");
 const fs = __importStar(require("fs"));
-const util = __importStar(require("../util.js"));
-const child_process_1 = require("child_process");
+const node_notifier_1 = __importDefault(require("node-notifier"));
 const interval = 8 * 1000;
 const getInfo = (input) => __awaiter(void 0, void 0, void 0, function* () {
-    let d = yield (0, mainv_js_1.getVideoInfo)(input);
+    let d;
+    try {
+        d = yield (0, mainv_js_1.getVideoInfo)(input);
+    }
+    catch (error) {
+        console.error(error);
+        node_notifier_1.default.notify({
+            title: "get info error!",
+            message: "get info error!",
+            sound: true
+        }, (error, response) => {
+            process.exit(0);
+        });
+    }
     let result = {
         aid: d.aid,
         videos: d.videos,
@@ -62,6 +77,32 @@ const compare = (a, b) => {
     }
     return true;
 };
+const diff = (a, b) => {
+    for (const k in a) {
+        if (Array.isArray(a[k])) {
+            let isChanged = false;
+            if (a[k].length != a[k].length) {
+                isChanged = true;
+            }
+            isChanged = isChanged || !(a[k].every(i => a[k][i] === b[k][i]));
+            if (isChanged) {
+                console.log(`分p: ${a[k]} -> ${b[k]}`);
+            }
+        }
+        else {
+            if (a[k] !== b[k]) {
+                console.log(`${k}: ${a[k]} -> ${b[k]}`);
+            }
+        }
+    }
+};
+const notifyChange = (text) => {
+    node_notifier_1.default.notify({
+        title: "Video changed!",
+        message: text,
+        sound: true
+    });
+};
 const main = (input) => __awaiter(void 0, void 0, void 0, function* () {
     let info = yield getInfo(input);
     let oldInfo;
@@ -86,21 +127,27 @@ const main = (input) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     if (!compare(info, oldInfo)) {
-        console.log("changed!");
-        util.alarm();
-        (0, child_process_1.exec)(`msg %username% "video ${info.title} changed!"`);
+        let currentTime = new Date().toString().replace(' (中国标准时间)', '').slice(4);
+        console.log(`[${currentTime}] 「${info.aid}-${info.title}」 changed!`);
+        console.log(diff(oldInfo, info));
+        notifyChange(`${info.aid}-${info.title} changed!`);
+        // util.alarm();
+        // exec(`msg %username% "video ${info.title} changed!"`);
     }
     fs.writeFileSync(`./cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
     setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
         oldInfo = JSON.parse(fs.readFileSync(`./cache/videoinfo-${info.aid}.json`, 'utf-8'));
         info = yield getInfo(input);
+        let currentTime = new Date().toString().replace(' (中国标准时间)', '').slice(4);
         if (!compare(info, oldInfo)) {
-            console.log("changed!");
-            util.alarm();
-            (0, child_process_1.exec)(`msg %username% "video ${info.title} changed!"`);
+            console.log(`!!![${currentTime}] 「${info.aid}-${info.title}」 changed!`);
+            console.log(diff(oldInfo, info));
+            notifyChange(`${info.aid}-${info.title} changed!`);
+            // util.alarm();
+            // exec(`msg %username% "video ${info.title} changed!"`);
         }
         else {
-            console.log("no change");
+            console.log(`[${currentTime}] 「${info.title}」 no change`);
         }
         fs.writeFileSync(`cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
     }), interval);

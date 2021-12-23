@@ -6,7 +6,7 @@ const exec = require('child_process').exec;
 const playAPI = new URL("https://api.live.bilibili.com/room/v1/Room/playUrl");
 const infoAPI = new URL("https://api.live.bilibili.com/room/v1/Room/get_info");
 
-var getRoomID = (input) => {
+let getRoomID = (input) => {
     let m = input.match(/^\d+$/);
     let RoomID = m ? m[0] : input.match(/live\.bilibili\.com\/(\d+)/)[1];
     if (!RoomID) {
