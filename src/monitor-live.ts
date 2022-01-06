@@ -8,7 +8,7 @@ interface monRoom {
   isAlert: boolean;
   description?: string;
 }
-const monitorRoomsPath = "./monitor-rooms.json";
+const monitorRoomsPath = `${__dirname}/../monitor-rooms.json`;
 const interval = 5 * 1000;
 
 const addRoom = (input: string, isAlert: boolean = true) => {
@@ -61,17 +61,18 @@ const monitor = () => {
     let room = new monitorRoom(r);
     await room.getInfo();
     if (room.live_status == 1) {
-      console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.id} is live!`);
+      await room.getUserInfo();
+      console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.uname} is live!`);
       if (room.isAlert) {
         notifier.notify({
-          title: `${room.id} ls live!`,
+          title: `${room.uname} ls live!`,
           message: room.title,
           sound: true
         });
       }
     }
     roomList.push(room);
-  });    //init rooms
+  });    //init rooms end
   setInterval(() => {
     roomList.forEach(async room => {
       let oldStatus = room.live_status;
@@ -97,19 +98,20 @@ const monitor = () => {
       //   });
       // }
       if (room.live_status !== oldStatus) {
+        await room.getUserInfo();
         if (room.live_status == 1) {
-          console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.id} is live!`);
+          console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.uname} is live!`);
           if (room.isAlert) {
             notifier.notify({
-              title: `${room.id} ls live!`,
+              title: `${room.uname} ls live!`,
               message: room.title,
               sound: true
             });
           }
         } else if (oldStatus == 1) {
-          console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.id} just stopped live!`);
+          console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.uname} just stopped live!`);
           notifier.notify({
-            title: `${room.id} just stopped live!`,
+            title: `${room.uname} just stopped live!`,
             message: `,,,`,
             sound: true
           });

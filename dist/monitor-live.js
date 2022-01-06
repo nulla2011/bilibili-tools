@@ -35,7 +35,7 @@ const live_js_1 = require("../core/live.js");
 const fs = __importStar(require("fs"));
 const util_js_1 = require("../util.js");
 const node_notifier_1 = __importDefault(require("node-notifier"));
-const monitorRoomsPath = "./monitor-rooms.json";
+const monitorRoomsPath = `${__dirname}/../monitor-rooms.json`;
 const interval = 5 * 1000;
 const addRoom = (input, isAlert = true) => {
     let newroom = {
@@ -89,17 +89,18 @@ const monitor = () => {
         let room = new monitorRoom(r);
         yield room.getInfo();
         if (room.live_status == 1) {
-            console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.id} is live!`);
+            yield room.getUserInfo();
+            console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.uname} is live!`);
             if (room.isAlert) {
                 node_notifier_1.default.notify({
-                    title: `${room.id} ls live!`,
+                    title: `${room.uname} ls live!`,
                     message: room.title,
                     sound: true
                 });
             }
         }
         roomList.push(room);
-    })); //init rooms
+    })); //init rooms end
     setInterval(() => {
         roomList.forEach((room) => __awaiter(void 0, void 0, void 0, function* () {
             let oldStatus = room.live_status;
@@ -124,20 +125,21 @@ const monitor = () => {
             //   });
             // }
             if (room.live_status !== oldStatus) {
+                yield room.getUserInfo();
                 if (room.live_status == 1) {
-                    console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.id} is live!`);
+                    console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.uname} is live!`);
                     if (room.isAlert) {
                         node_notifier_1.default.notify({
-                            title: `${room.id} ls live!`,
+                            title: `${room.uname} ls live!`,
                             message: room.title,
                             sound: true
                         });
                     }
                 }
                 else if (oldStatus == 1) {
-                    console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.id} just stopped live!`);
+                    console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.uname} just stopped live!`);
                     node_notifier_1.default.notify({
-                        title: `${room.id} just stopped live!`,
+                        title: `${room.uname} just stopped live!`,
                         message: `,,,`,
                         sound: true
                     });

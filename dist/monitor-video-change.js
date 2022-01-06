@@ -109,18 +109,18 @@ const main = (input) => __awaiter(void 0, void 0, void 0, function* () {
     let info = yield getInfo(input);
     let oldInfo;
     try {
-        oldInfo = JSON.parse(fs.readFileSync(`./cache/videoinfo-${info.aid}.json`, 'utf-8'));
+        oldInfo = JSON.parse(fs.readFileSync(`${__dirname}/../cache/videoinfo-${info.aid}.json`, 'utf-8'));
     }
     catch (e) {
         if (e.code === "ENOENT") { //没有缓存
             console.error(`no cache for ${info.aid}`);
             oldInfo = info;
             try {
-                fs.copyFileSync(`./cache/videoinfo-${info.aid}.json`, `./cache/videoinfo-${info.aid}.json.old`);
+                fs.copyFileSync(`${__dirname}/../cache/videoinfo-${info.aid}.json`, `${__dirname}/../cache/videoinfo-${info.aid}.json.old`);
             }
             catch (e) { }
             finally {
-                fs.writeFileSync(`./cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
+                fs.writeFileSync(`${__dirname}/../cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
             }
         }
         else {
@@ -136,9 +136,9 @@ const main = (input) => __awaiter(void 0, void 0, void 0, function* () {
         // util.alarm();
         // exec(`msg %username% "video ${info.title} changed!"`);
     }
-    fs.writeFileSync(`./cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
+    fs.writeFileSync(`${__dirname}/../cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
     setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
-        oldInfo = JSON.parse(fs.readFileSync(`./cache/videoinfo-${info.aid}.json`, 'utf-8'));
+        oldInfo = JSON.parse(fs.readFileSync(`${__dirname}/../cache/videoinfo-${info.aid}.json`, 'utf-8'));
         info = yield getInfo(input);
         let currentTime = new Date().toString().replace(' (中国标准时间)', '').slice(4);
         if (!compare(info, oldInfo)) {
@@ -151,11 +151,11 @@ const main = (input) => __awaiter(void 0, void 0, void 0, function* () {
         else {
             console.log(`[${currentTime}] 「${info.title}」 no change`);
         }
-        fs.writeFileSync(`cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
+        fs.writeFileSync(`${__dirname}/../cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
     }), interval);
     process.on('SIGINT', () => {
         console.log('exit');
-        fs.writeFileSync(`cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
+        fs.writeFileSync(`${__dirname}/../cache/videoinfo-${info.aid}.json`, JSON.stringify(info, null, 2));
         process.exit();
     });
     // process.on("message", (msg) => {

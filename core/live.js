@@ -5,6 +5,7 @@ const exec = require('child_process').exec;
 
 const playAPI = new URL("https://api.live.bilibili.com/room/v1/Room/playUrl");
 const infoAPI = new URL("https://api.live.bilibili.com/room/v1/Room/get_info");
+const userInfoAPI = new URL("http://api.live.bilibili.com/live_user/v1/Master/info");
 
 let getRoomID = (input) => {
     let m = input.match(/^\d+$/);
@@ -76,6 +77,7 @@ class Room {
         this.live_time = response.data.live_time;     //开播时间
         this.parent_area_name = response.data.parent_area_name;
         this.area_name = response.data.area_name;
+        this.uid = response.data.uid;       //同主站uid
     }
     async play(quality) {
         await this.getPlayurl(quality);
@@ -88,6 +90,24 @@ class Room {
                 console.log(stdout);
             }
         });
+    }
+    async getUserInfo() {
+        if (!this.uid) await this.getInfo();
+        userInfoAPI.searchParams.set("uid", this.uid);
+        let options = {
+            hostname: userInfoAPI.hostname,
+            port: 80,
+            path: userInfoAPI.pathname + userInfoAPI.search,
+            method: 'GET',
+            headers: {
+                'referer': 'http://live.bilibili.com/'
+            }
+        }
+        let response = await httpGet(options);
+        if (response.code !== 0) {
+            throw "code:" + response.code + " message:" + response.message;
+        }
+        this.uname = response.data.info.uname;
     }
 }
 
