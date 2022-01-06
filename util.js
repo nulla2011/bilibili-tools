@@ -88,7 +88,7 @@ try {
     config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 } catch (error) {
     if (error.code == "ENOENT") {
-        printErr("No conifig file, creating..");
+        printErr("No config file, creating..");
         try {
             fs.copyFileSync("config.json", "config.json.old");
         } catch (e) { } finally {

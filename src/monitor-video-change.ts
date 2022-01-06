@@ -2,7 +2,9 @@ import { getVideoInfo } from '../core/mainv.js';
 import * as fs from 'fs';
 import notifier from 'node-notifier';
 
-const interval = 8 * 1000;
+const normalInterval = 1 * 60 * 60 * 1000;
+const testInterval = 1 * 60 * 1000;
+const interval = testInterval;
 interface videoDataForCompare {
   aid: number;
   videos: number;
@@ -55,6 +57,7 @@ const compare = (a: videoDataForCompare, b: videoDataForCompare): boolean => {
 }
 const diff = (a: videoDataForCompare, b: videoDataForCompare) => {
   for (const k in a) {
+
     if (Array.isArray(a[k])) {
       let isChanged = false;
       if (a[k].length != a[k].length) {

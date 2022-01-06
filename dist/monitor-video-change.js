@@ -34,7 +34,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mainv_js_1 = require("../core/mainv.js");
 const fs = __importStar(require("fs"));
 const node_notifier_1 = __importDefault(require("node-notifier"));
-const interval = 8 * 1000;
+const normalInterval = 1 * 60 * 60 * 1000;
+const testInterval = 1 * 60 * 1000;
+const interval = testInterval;
 const getInfo = (input) => __awaiter(void 0, void 0, void 0, function* () {
     let d;
     try {
