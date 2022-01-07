@@ -1,6 +1,6 @@
 import { getRoomID, Room } from "../core/live.js";
 import * as fs from "fs";
-import { printErr, printWarn } from "../util.js";
+import { printErr, printWarn, printInfo } from "../util.js";
 import notifier from 'node-notifier';
 
 interface monRoom {
@@ -8,7 +8,7 @@ interface monRoom {
   isAlert: boolean;
   description?: string;
 }
-const monitorRoomsPath = `${__dirname}/../monitor-rooms.json`;
+const monitorRoomsSettingPath = `${__dirname}/../monitor-rooms.json`;
 const interval = 5 * 1000;
 
 const addRoom = (input: string, isAlert: boolean = true) => {
@@ -18,9 +18,9 @@ const addRoom = (input: string, isAlert: boolean = true) => {
   }
   let jsonData: monRoom[];
   try {
-    jsonData = JSON.parse(fs.readFileSync(monitorRoomsPath, 'utf-8'));
+    jsonData = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
   } catch (error: any) {
-    if (error.code == "ENOENT") {
+    if (error.code === "ENOENT") {
       printWarn("No config file");
       jsonData = [];
     } else {
@@ -32,24 +32,26 @@ const addRoom = (input: string, isAlert: boolean = true) => {
     printErr("room already exists!");
   } else {
     jsonData.push(newroom);
-    fs.writeFileSync(monitorRoomsPath, JSON.stringify(jsonData), 'utf-8');
+    fs.writeFileSync(monitorRoomsSettingPath, JSON.stringify(jsonData, null, 2), 'utf-8');
+    printInfo("add success");
   }
 }
-interface monitorRoom extends Room {
-  isAlert: boolean;
-}
 class monitorRoom extends Room {
+  private _isAlert: boolean;
   constructor(r: monRoom) {
     super(r.id);
-    this.isAlert = r.isAlert;
+    this._isAlert = r.isAlert;
+  }
+  public get isAlert() {
+    return this._isAlert;
   }
 }
 const monitor = () => {
   let monitorList: monRoom[];
   try {
-    monitorList = JSON.parse(fs.readFileSync(monitorRoomsPath, 'utf-8'));
+    monitorList = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
   } catch (error: any) {
-    if (error.code == "ENOENT") {
+    if (error.code === "ENOENT") {
       console.error("No config file");
     } else {
       console.error("Unknown error");

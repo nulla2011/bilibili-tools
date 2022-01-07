@@ -35,7 +35,7 @@ const live_js_1 = require("../core/live.js");
 const fs = __importStar(require("fs"));
 const util_js_1 = require("../util.js");
 const node_notifier_1 = __importDefault(require("node-notifier"));
-const monitorRoomsPath = `${__dirname}/../monitor-rooms.json`;
+const monitorRoomsSettingPath = `${__dirname}/../monitor-rooms.json`;
 const interval = 5 * 1000;
 const addRoom = (input, isAlert = true) => {
     let newroom = {
@@ -44,10 +44,10 @@ const addRoom = (input, isAlert = true) => {
     };
     let jsonData;
     try {
-        jsonData = JSON.parse(fs.readFileSync(monitorRoomsPath, 'utf-8'));
+        jsonData = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
     }
     catch (error) {
-        if (error.code == "ENOENT") {
+        if (error.code === "ENOENT") {
             (0, util_js_1.printWarn)("No config file");
             jsonData = [];
         }
@@ -61,22 +61,26 @@ const addRoom = (input, isAlert = true) => {
     }
     else {
         jsonData.push(newroom);
-        fs.writeFileSync(monitorRoomsPath, JSON.stringify(jsonData), 'utf-8');
+        fs.writeFileSync(monitorRoomsSettingPath, JSON.stringify(jsonData, null, 2), 'utf-8');
+        (0, util_js_1.printInfo)("add success");
     }
 };
 class monitorRoom extends live_js_1.Room {
     constructor(r) {
         super(r.id);
-        this.isAlert = r.isAlert;
+        this._isAlert = r.isAlert;
+    }
+    get isAlert() {
+        return this._isAlert;
     }
 }
 const monitor = () => {
     let monitorList;
     try {
-        monitorList = JSON.parse(fs.readFileSync(monitorRoomsPath, 'utf-8'));
+        monitorList = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
     }
     catch (error) {
-        if (error.code == "ENOENT") {
+        if (error.code === "ENOENT") {
             console.error("No config file");
         }
         else {
