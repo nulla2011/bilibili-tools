@@ -35,9 +35,19 @@ const live_js_1 = require("../core/live.js");
 const fs = __importStar(require("fs"));
 const util_js_1 = require("../util.js");
 const node_notifier_1 = __importDefault(require("node-notifier"));
+const child_process_1 = require("child_process");
 const monitorRoomsSettingPath = `${__dirname}/../monitor-rooms.json`;
 const interval = 5 * 1000;
-const addRoom = (input, isAlert = true) => {
+class MonitorRoom extends live_js_1.Room {
+    constructor(r) {
+        super(r.id);
+        this._isAlert = r.isAlert;
+    }
+    get isAlert() {
+        return this._isAlert;
+    }
+}
+const addRoom = (input, isAlert = true) => __awaiter(void 0, void 0, void 0, function* () {
     let newroom = {
         id: (0, live_js_1.getRoomID)(input),
         isAlert
@@ -60,21 +70,34 @@ const addRoom = (input, isAlert = true) => {
         (0, util_js_1.printErr)("room already exists!");
     }
     else {
+        let newRoomI = new MonitorRoom(newroom);
+        yield newRoomI.getUserInfo();
+        newroom.uname = newRoomI.uname;
         jsonData.push(newroom);
         fs.writeFileSync(monitorRoomsSettingPath, JSON.stringify(jsonData, null, 2), 'utf-8');
         (0, util_js_1.printInfo)("add success");
     }
+});
+const alertLive = (room) => {
+    return new Promise((resolve) => {
+        node_notifier_1.default.notify({
+            title: `${room.uname} ls live!`,
+            message: room.title,
+            sound: true,
+            actions: ['watch', 'cancel']
+        });
+        node_notifier_1.default.once('watch', () => {
+            (0, child_process_1.exec)(`start https://live.bilibili.com/${room.id}`);
+            node_notifier_1.default.removeAllListeners();
+            resolve(null);
+        });
+        node_notifier_1.default.once('cancel', () => {
+            node_notifier_1.default.removeAllListeners();
+            resolve(null);
+        });
+    });
 };
-class monitorRoom extends live_js_1.Room {
-    constructor(r) {
-        super(r.id);
-        this._isAlert = r.isAlert;
-    }
-    get isAlert() {
-        return this._isAlert;
-    }
-}
-const monitor = () => {
+const monitor = () => __awaiter(void 0, void 0, void 0, function* () {
     let monitorList;
     try {
         monitorList = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
@@ -88,23 +111,19 @@ const monitor = () => {
         }
         process.exit(0);
     }
+    //init rooms start
     let roomList = [];
-    monitorList.forEach((r) => __awaiter(void 0, void 0, void 0, function* () {
-        let room = new monitorRoom(r);
+    for (const r of monitorList) {
+        let room = new MonitorRoom(r);
         yield room.getInfo();
         if (room.live_status == 1) {
             yield room.getUserInfo();
-            console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.uname} is live!`);
-            if (room.isAlert) {
-                node_notifier_1.default.notify({
-                    title: `${room.uname} ls live!`,
-                    message: room.title,
-                    sound: true
-                });
-            }
+            console.log(`${room.uname} is live since ${room.live_time}`);
+            room.isAlert && (yield alertLive(room));
         }
         roomList.push(room);
-    })); //init rooms end
+    }
+    //init rooms end
     setInterval(() => {
         roomList.forEach((room) => __awaiter(void 0, void 0, void 0, function* () {
             let oldStatus = room.live_status;
@@ -131,17 +150,11 @@ const monitor = () => {
             if (room.live_status !== oldStatus) {
                 yield room.getUserInfo();
                 if (room.live_status == 1) {
-                    console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.uname} is live!`);
-                    if (room.isAlert) {
-                        node_notifier_1.default.notify({
-                            title: `${room.uname} ls live!`,
-                            message: room.title,
-                            sound: true
-                        });
-                    }
+                    console.log(`[${(0, util_js_1.formatDate)(new Date())}] ${room.uname} is live!`);
+                    room.isAlert && (yield alertLive(room));
                 }
                 else if (oldStatus == 1) {
-                    console.log(`[${new Date().toString().replace(' (中国标准时间)', '')}] ${room.uname} just stopped live!`);
+                    console.log(`[${(0, util_js_1.formatDate)(new Date())}] ${room.uname} just stopped live!`);
                     node_notifier_1.default.notify({
                         title: `${room.uname} just stopped live!`,
                         message: `,,,`,
@@ -151,7 +164,7 @@ const monitor = () => {
             }
         }));
     }, interval);
-};
+});
 if (process.argv[2] == "-a") {
     try {
         addRoom(process.argv[3]);

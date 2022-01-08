@@ -3,9 +3,10 @@ declare namespace live {
 }
 declare class Room {
   id: number;
-  live_status?: number;
+  live_status: number;
   title: string;
   uname: string;
+  live_time: string;
   constructor(ID: number);
   getInfo();
   getUserInfo();
