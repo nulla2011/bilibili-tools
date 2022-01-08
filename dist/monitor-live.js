@@ -39,19 +39,19 @@ const child_process_1 = require("child_process");
 const monitorRoomsSettingPath = `${__dirname}/../monitor-rooms.json`;
 const interval = 5 * 1000;
 class MonitorRoom extends live_js_1.Room {
-    constructor(r) {
-        super(r.id);
-        this._isAlert = r.isAlert;
+    constructor(id) {
+        super(id);
+        this._isAlert = true;
     }
     get isAlert() {
         return this._isAlert;
     }
+    setNoAlert() {
+        this._isAlert = false;
+    }
 }
 const addRoom = (input, isAlert = true) => __awaiter(void 0, void 0, void 0, function* () {
-    let newroom = {
-        id: (0, live_js_1.getRoomID)(input),
-        isAlert
-    };
+    let id = (0, live_js_1.getRoomID)(input);
     let jsonData;
     try {
         jsonData = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
@@ -59,21 +59,26 @@ const addRoom = (input, isAlert = true) => __awaiter(void 0, void 0, void 0, fun
     catch (error) {
         if (error.code === "ENOENT") {
             (0, util_js_1.printWarn)("No config file");
-            jsonData = [];
+            jsonData = {};
         }
         else {
             (0, util_js_1.printErr)("Unknown error");
             process.exit(0);
         }
     }
-    if (jsonData.some(i => i.id == newroom.id)) {
+    if (jsonData.hasOwnProperty(id)) {
         (0, util_js_1.printErr)("room already exists!");
     }
     else {
-        let newRoomI = new MonitorRoom(newroom);
-        yield newRoomI.getUserInfo();
-        newroom.uname = newRoomI.uname;
-        jsonData.push(newroom);
+        let newRoom = new MonitorRoom(id);
+        yield newRoom.getInfo();
+        yield newRoom.getUserInfo();
+        let newMRoom = {
+            id,
+            isAlert: newRoom.isAlert,
+            uname: newRoom.uname
+        };
+        jsonData[id] = newMRoom;
         fs.writeFileSync(monitorRoomsSettingPath, JSON.stringify(jsonData, null, 2), 'utf-8');
         (0, util_js_1.printInfo)("add success");
     }
@@ -113,8 +118,9 @@ const monitor = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     //init rooms start
     let roomList = [];
-    for (const r of monitorList) {
-        let room = new MonitorRoom(r);
+    for (const id in monitorList) {
+        let room = new MonitorRoom(id);
+        monitorList[id].isAlert || room.setNoAlert();
         yield room.getInfo();
         if (room.live_status == 1) {
             yield room.getUserInfo();
@@ -128,25 +134,6 @@ const monitor = () => __awaiter(void 0, void 0, void 0, function* () {
         roomList.forEach((room) => __awaiter(void 0, void 0, void 0, function* () {
             let oldStatus = room.live_status;
             yield room.getInfo();
-            // if (room.live_status == 1) {
-            //   console.log(`${room.id} is live!`);
-            //   if (room.live_status !== oldStatus) {
-            //     if (room.isAlert) {
-            //       notifier.notify({
-            //         title: `${room.id} ls live!`,
-            //         message: room.title,
-            //         sound: true
-            //       });
-            //     }
-            //   }
-            // } else if (room.live_status !== oldStatus && oldStatus == 1) {
-            //   console.log(`${room.id} just stopped live!`);
-            //   notifier.notify({
-            //     title: `${room.id} just stopped live!`,
-            //     message: `,,,`,
-            //     sound: true
-            //   });
-            // }
             if (room.live_status !== oldStatus) {
                 yield room.getUserInfo();
                 if (room.live_status == 1) {
@@ -157,7 +144,7 @@ const monitor = () => __awaiter(void 0, void 0, void 0, function* () {
                     console.log(`[${(0, util_js_1.formatDate)(new Date())}] ${room.uname} just stopped live!`);
                     node_notifier_1.default.notify({
                         title: `${room.uname} just stopped live!`,
-                        message: `,,,`,
+                        message: `，，，`,
                         sound: true
                     });
                 }

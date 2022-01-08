@@ -8,44 +8,53 @@ interface monRoom {
   id: number;
   isAlert: boolean;
   uname?: string;
+  live_time?: string;
+}
+interface Ijson {
+  [key: number]: monRoom;
 }
 const monitorRoomsSettingPath = `${__dirname}/../monitor-rooms.json`;
 const interval = 5 * 1000;
 
 class MonitorRoom extends Room {
   private _isAlert: boolean;
-  constructor(r: monRoom) {
-    super(r.id);
-    this._isAlert = r.isAlert;
+  constructor(id) {
+    super(id);
+    this._isAlert = true;
   }
   public get isAlert() {
     return this._isAlert;
   }
+  public setNoAlert() {
+    this._isAlert = false;
+  }
 }
 const addRoom = async (input: string, isAlert: boolean = true) => {
-  let newroom: monRoom = {
-    id: getRoomID(input),
-    isAlert
-  }
-  let jsonData: monRoom[];
+  let id = getRoomID(input);
+  let jsonData: Ijson;
   try {
     jsonData = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
   } catch (error: any) {
     if (error.code === "ENOENT") {
       printWarn("No config file");
-      jsonData = [];
+      jsonData = {};
     } else {
       printErr("Unknown error");
       process.exit(0);
     }
   }
-  if (jsonData.some(i => i.id == newroom.id)) {
+  if (jsonData.hasOwnProperty(id)) {
     printErr("room already exists!");
   } else {
-    let newRoomI = new MonitorRoom(newroom);
-    await newRoomI.getUserInfo();
-    newroom.uname = newRoomI.uname;
-    jsonData.push(newroom);
+    let newRoom = new MonitorRoom(id);
+    await newRoom.getInfo();
+    await newRoom.getUserInfo();
+    let newMRoom: monRoom = {
+      id,
+      isAlert: newRoom.isAlert,
+      uname: newRoom.uname
+    }
+    jsonData[id] = newMRoom;
     fs.writeFileSync(monitorRoomsSettingPath, JSON.stringify(jsonData, null, 2), 'utf-8');
     printInfo("add success");
   }
@@ -70,7 +79,7 @@ const alertLive = (room: MonitorRoom) => {
   })
 }
 const monitor = async () => {
-  let monitorList: monRoom[];
+  let monitorList: Ijson;
   try {
     monitorList = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
   } catch (error: any) {
@@ -83,8 +92,9 @@ const monitor = async () => {
   }
   //init rooms start
   let roomList: MonitorRoom[] = [];
-  for (const r of monitorList) {
-    let room = new MonitorRoom(r);
+  for (const id in monitorList) {
+    let room = new MonitorRoom(id);
+    monitorList[id].isAlert || room.setNoAlert();
     await room.getInfo();
     if (room.live_status == 1) {
       await room.getUserInfo();
@@ -98,26 +108,6 @@ const monitor = async () => {
     roomList.forEach(async room => {
       let oldStatus = room.live_status;
       await room.getInfo();
-      // if (room.live_status == 1) {
-      //   console.log(`${room.id} is live!`);
-      //   if (room.live_status !== oldStatus) {
-
-      //     if (room.isAlert) {
-      //       notifier.notify({
-      //         title: `${room.id} ls live!`,
-      //         message: room.title,
-      //         sound: true
-      //       });
-      //     }
-      //   }
-      // } else if (room.live_status !== oldStatus && oldStatus == 1) {
-      //   console.log(`${room.id} just stopped live!`);
-      //   notifier.notify({
-      //     title: `${room.id} just stopped live!`,
-      //     message: `,,,`,
-      //     sound: true
-      //   });
-      // }
       if (room.live_status !== oldStatus) {
         await room.getUserInfo();
         if (room.live_status == 1) {
@@ -127,7 +117,7 @@ const monitor = async () => {
           console.log(`[${formatDate(new Date())}] ${room.uname} just stopped live!`);
           notifier.notify({
             title: `${room.uname} just stopped live!`,
-            message: `,,,`,
+            message: `，，，`,
             sound: true
           });
         }
