@@ -128,6 +128,5 @@ module.exports = {
     printErr,
     printWarn,
     printInfo,
-    formatDate,
-    alarm
+    formatDate
 }

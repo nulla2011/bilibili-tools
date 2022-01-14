@@ -7,6 +7,8 @@ declare class Room {
   title: string;
   uname: string;
   live_time: string;
+  uface: string;
+  online: number;
   constructor(ID: number);
   getInfo();
   getUserInfo();

@@ -1,0 +1,68 @@
+
+a{
+  text-decoration: none;
+  display: flex;
+}
+.room{
+  margin-left: auto;
+  margin-right: auto;
+  width: 380px;
+  padding: 5px;
+  background-image: linear-gradient(90deg, #e0e4ff, #ddffee);
+  border: 1px solid #808080;
+  border-radius: 5px;
+}
+img{
+  border-radius: 50%;
+  box-shadow: 0 0 3px #333;
+}
+.face{
+  height: 60px;
+  width: 60px;
+  margin: 12px;
+}
+.text{
+  width: 320px;
+}
+.name{
+  color: #08323d;
+  font-weight: bolder;
+  font-size: 17px;
+  margin: 5px 0 5px 5px;
+}
+.title{
+  color: #333;
+  font-size: 15px;
+  margin: 3px 0 3px 0;
+  position: relative;
+  left: 5px;
+}
+.online{
+  float: left;
+  margin: 2px;
+}
+.online span:nth-child(1){
+  margin: 2px;
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  background-image: url("/live-online.svg");
+  background-size: 100%;
+  background-position: bottom -2px left;
+  background-repeat: no-repeat;
+  float: left;
+}
+.online span:nth-child(2){
+  margin: 2px;
+  height: 18px;
+  float: left;
+  color: #444;
+  font-size: 14px;
+}
+.time{
+  color: #666;
+  font-size: 9px;
+  margin: 18px 3px 3px 0;
+  float: right;
+  position: relative;
+}

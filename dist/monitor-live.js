@@ -36,7 +36,9 @@ const fs = __importStar(require("fs"));
 const util_js_1 = require("../util.js");
 const node_notifier_1 = __importDefault(require("node-notifier"));
 const child_process_1 = require("child_process");
-const monitorRoomsSettingPath = `${__dirname}/../monitor-rooms.json`;
+const express_1 = __importDefault(require("express"));
+const path = __importStar(require("path"));
+const monitorRoomsSettingPath = path.resolve(`${__dirname}/../monitor-rooms.json`);
 const interval = 5 * 1000;
 class MonitorRoom extends live_js_1.Room {
     constructor(id) {
@@ -52,21 +54,21 @@ class MonitorRoom extends live_js_1.Room {
 }
 const addRoom = (input, isAlert = true) => __awaiter(void 0, void 0, void 0, function* () {
     let id = (0, live_js_1.getRoomID)(input);
-    let jsonData;
+    let jsonDATA;
     try {
-        jsonData = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
+        jsonDATA = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
     }
     catch (error) {
         if (error.code === "ENOENT") {
             (0, util_js_1.printWarn)("No config file");
-            jsonData = {};
+            jsonDATA = {};
         }
         else {
             (0, util_js_1.printErr)("Unknown error");
             process.exit(0);
         }
     }
-    if (jsonData.hasOwnProperty(id)) {
+    if (jsonDATA.hasOwnProperty(id)) {
         (0, util_js_1.printErr)("room already exists!");
     }
     else {
@@ -78,9 +80,14 @@ const addRoom = (input, isAlert = true) => __awaiter(void 0, void 0, void 0, fun
             isAlert: newRoom.isAlert,
             uname: newRoom.uname
         };
-        jsonData[id] = newMRoom;
-        fs.writeFileSync(monitorRoomsSettingPath, JSON.stringify(jsonData, null, 2), 'utf-8');
+        jsonDATA[id] = newMRoom;
+        fs.writeFileSync(monitorRoomsSettingPath, JSON.stringify(jsonDATA, null, 2), 'utf-8');
         (0, util_js_1.printInfo)("add success");
+    }
+});
+const alertLives = (roomList) => __awaiter(void 0, void 0, void 0, function* () {
+    for (const room of roomList) {
+        room.isAlert && (yield alertLive(room));
     }
 });
 const alertLive = (room) => {
@@ -102,56 +109,96 @@ const alertLive = (room) => {
         });
     });
 };
-const monitor = () => __awaiter(void 0, void 0, void 0, function* () {
-    let monitorList;
-    try {
-        monitorList = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
-    }
-    catch (error) {
-        if (error.code === "ENOENT") {
-            console.error("No config file");
+const list2html = (list) => {
+    let html = fs.readFileSync(`${__dirname}/../templates/liveRooms.html`, 'utf-8');
+    list.sort((r1, r2) => new Date(r2.live_time).getTime() - new Date(r1.live_time).getTime());
+    let content = list.reduce((c, r) => {
+        return c +
+            `<div class="room">\
+      <a href='https://live.bilibili.com/${r.id}' target="_blank">\
+      <div class="face"><img src="https://images.weserv.nl/?url=${r.uface}@60w_60h.webp"/></div>\
+      <div class="text">\
+      <div class="name">${r.uname}</div>\
+      <div class="title">${r.title}</div>\
+      <div class="online"><span></span><span>${r.online}</span></div>\
+      <div class="time">started at: ${r.live_time}</div>\
+      </div></a></div>`;
+    }, '');
+    let insertIndex = html.search('</main>') - 1;
+    return html.slice(0, insertIndex) + content + html.slice(insertIndex);
+};
+function monitor() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let monitorList;
+        try {
+            monitorList = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
         }
-        else {
-            console.error("Unknown error");
-        }
-        process.exit(0);
-    }
-    //init rooms start
-    let roomList = [];
-    for (const id in monitorList) {
-        let room = new MonitorRoom(id);
-        monitorList[id].isAlert || room.setNoAlert();
-        yield room.getInfo();
-        if (room.live_status == 1) {
-            yield room.getUserInfo();
-            console.log(`${room.uname} is live since ${room.live_time}`);
-            room.isAlert && (yield alertLive(room));
-        }
-        roomList.push(room);
-    }
-    //init rooms end
-    setInterval(() => {
-        roomList.forEach((room) => __awaiter(void 0, void 0, void 0, function* () {
-            let oldStatus = room.live_status;
-            yield room.getInfo();
-            if (room.live_status !== oldStatus) {
-                yield room.getUserInfo();
-                if (room.live_status == 1) {
-                    console.log(`[${(0, util_js_1.formatDate)(new Date())}] ${room.uname} is live!`);
-                    room.isAlert && (yield alertLive(room));
-                }
-                else if (oldStatus == 1) {
-                    console.log(`[${(0, util_js_1.formatDate)(new Date())}] ${room.uname} just stopped live!`);
-                    node_notifier_1.default.notify({
-                        title: `${room.uname} just stopped live!`,
-                        message: `，，，`,
-                        sound: true
-                    });
-                }
+        catch (error) {
+            if (error.code === "ENOENT") {
+                console.error("No config file");
             }
-        }));
-    }, interval);
-});
+            else {
+                console.error("Unknown error");
+            }
+            process.exit(0);
+        }
+        //init rooms start
+        let roomList = [];
+        let liveRoomList = [];
+        for (const id in monitorList) {
+            let room = new MonitorRoom(id);
+            monitorList[id].isAlert || room.setNoAlert();
+            yield room.getInfo();
+            if (room.live_status == 1) {
+                yield room.getUserInfo();
+                console.log(`${room.uname} is live since ${room.live_time}`);
+                liveRoomList.push(room);
+            }
+            roomList.push(room);
+        }
+        //init rooms end
+        const app = (0, express_1.default)();
+        app.get('/', (req, res) => {
+            res.append('Content-Type', 'text/html');
+            res.send(list2html(liveRoomList));
+        });
+        app.get('/index.css', (req, res) => {
+            res.append('Content-Type', 'text/css');
+            res.sendFile(path.resolve(`${__dirname}/../templates/liveRooms.css`));
+        });
+        app.get('/live-online.svg', (req, res) => {
+            res.append('Content-Type', 'image/svg+xml');
+            res.sendFile(path.resolve(`${__dirname}/../templates/live-online.svg`));
+        });
+        app.listen(1173);
+        alertLives(liveRoomList);
+        setInterval(() => {
+            roomList.forEach((room) => __awaiter(this, void 0, void 0, function* () {
+                let oldStatus = room.live_status;
+                yield room.getInfo();
+                if (room.live_status !== oldStatus) {
+                    yield room.getUserInfo();
+                    if (room.live_status == 1) {
+                        console.log(`[${(0, util_js_1.formatDate)(new Date())}] ${room.uname} is live!`);
+                        liveRoomList.push(room);
+                        room.isAlert && (yield alertLive(room));
+                    }
+                    else if (oldStatus == 1) {
+                        console.log(`[${(0, util_js_1.formatDate)(new Date())}] ${room.uname} just stopped live!`);
+                        let i = liveRoomList.findIndex((e) => e.id === room.id);
+                        i != -1 && liveRoomList.splice(i, 1);
+                        node_notifier_1.default.notify({
+                            title: `${room.uname} just stopped live!`,
+                            message: `，，，`,
+                            sound: true
+                        });
+                    }
+                }
+            }));
+        }, interval);
+    });
+}
+;
 if (process.argv[2] == "-a") {
     try {
         addRoom(process.argv[3]);

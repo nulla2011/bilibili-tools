@@ -108,6 +108,7 @@ class Room {
             throw "code:" + response.code + " message:" + response.message;
         }
         this.uname = response.data.info.uname;
+        this.uface = response.data.info.face;
     }
 }
 
