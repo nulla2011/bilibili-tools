@@ -97,6 +97,13 @@ const alertLive = (room) => {
             message: room.title,
             sound: true,
             actions: ['watch', 'cancel']
+        }, (error, response) => {
+            if (error)
+                console.error(error);
+            if (response == 'timeout') {
+                node_notifier_1.default.removeAllListeners();
+                resolve(null);
+            }
         });
         node_notifier_1.default.once('watch', () => {
             (0, child_process_1.exec)(`start https://live.bilibili.com/${room.id}`);

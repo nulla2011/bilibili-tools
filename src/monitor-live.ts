@@ -73,6 +73,12 @@ const alertLive = (room: MonitorRoom) => {
       message: room.title,
       sound: true,
       actions: ['watch', 'cancel']
+    }, (error, response) => {
+      if (error) console.error(error);
+      if (response == 'timeout') {
+        notifier.removeAllListeners();
+        resolve(null);
+      }
     });
     notifier.once('watch', () => {
       exec(`start https://live.bilibili.com/${room.id}`);
