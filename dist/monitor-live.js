@@ -100,7 +100,7 @@ const alertLive = (room) => {
         }, (error, response) => {
             if (error)
                 console.error(error);
-            if (response == 'timeout') {
+            if (['timeout', 'activate', 'dismissed'].includes(response)) {
                 node_notifier_1.default.removeAllListeners();
                 resolve(null);
             }

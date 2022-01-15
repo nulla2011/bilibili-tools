@@ -75,7 +75,7 @@ const alertLive = (room: MonitorRoom) => {
       actions: ['watch', 'cancel']
     }, (error, response) => {
       if (error) console.error(error);
-      if (response == 'timeout') {
+      if (['timeout', 'activate', 'dismissed'].includes(response)) {
         notifier.removeAllListeners();
         resolve(null);
       }
