@@ -7,12 +7,12 @@ const util = require('../util.js');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
 
-const viewAPI = new URL("https://api.bilibili.com/x/web-interface/view");
-const playurlAPI = new URL("https://api.bilibili.com/x/player/playurl");
-const statAPI = new URL("https://api.bilibili.com/x/web-interface/archive/stat");
-const infoAPI = new URL("https://api.bilibili.com/x/player/pagelist");
+const VIEW_API = new URL("https://api.bilibili.com/x/web-interface/view");
+const PLAYURL_API = new URL("https://api.bilibili.com/x/player/playurl");
+const STST_API = new URL("https://api.bilibili.com/x/web-interface/archive/stat");
+const INFO_API = new URL("https://api.bilibili.com/x/player/pagelist");
 
-const qualityText = {
+const QUALITY_TEXT = {
     120: "4K",
     116: "1080P60",
     112: "1080P 高码率",
@@ -22,7 +22,7 @@ const qualityText = {
     32: "480P",
     16: "360P"
 };
-const hevcUrlQualityText = {
+const HEVC_QUALITY_TEXT = {
     106: "1080P60",
     102: "1080P 高码率",
     77: "1080P",
@@ -30,7 +30,7 @@ const hevcUrlQualityText = {
     33: "480P",
     11: "360P"
 }
-const aria2Args = ['-s', '16', '-x', '16', '--check-certificate=false', '--continue=true', '--referer=https://www.bilibili.com'];
+const ARIA2_ARGS = ['-s', '16', '-x', '16', '--check-certificate=false', '--continue=true', '--referer=https://www.bilibili.com'];
 
 let getPartNum = (input) => {
     let partFinder = input.match(/p=(\d+)/);
@@ -44,11 +44,11 @@ let getVideoInfo = async (input) => {
         throw "input illegal";
     }
     let parameters = mbvid ? ["bvid", mbvid[0]] : maid ? ["aid", maid[1]] : null;
-    viewAPI.searchParams.set(...parameters);
+    VIEW_API.searchParams.set(...parameters);
     let options = {
-        hostname: viewAPI.hostname,
+        hostname: VIEW_API.hostname,
         port: 80,
-        path: viewAPI.pathname + viewAPI.search,
+        path: VIEW_API.pathname + VIEW_API.search,
         method: 'GET'
     };
     let response = await httpGet(options);
@@ -95,9 +95,9 @@ class Page extends Video {
             otype: "json"
         }
         for (const k in query) {
-            playurlAPI.searchParams.set(k, query[k]);
+            PLAYURL_API.searchParams.set(k, query[k]);
         }
-        return playurlAPI;
+        return PLAYURL_API;
     }
     async getPlayurl() {
         let rurl = this.fillPlayAPIUrl();
@@ -121,7 +121,7 @@ class Page extends Video {
             if (quality == 64) {
                 util.printErr("WARNING: cookie may be invalid");
             }
-            util.printErr(`WARNING: the max quality is:\n${qualityText[highestQuality]}\n,but the quality will be downloaded/played is\n${qualityText[quality]}\ncontinue?(y/n)`);
+            util.printErr(`WARNING: the max quality is:\n${QUALITY_TEXT[highestQuality]}\n,but the quality will be downloaded/played is\n${QUALITY_TEXT[quality]}\ncontinue?(y/n)`);
             let line = await readlineSync();
             if (line == 'n') {
                 process.exit();
@@ -183,7 +183,7 @@ class Page extends Video {
                     break;
                 case 1:
                     fileName = fileName.slice(0, -4) + `_${videoOn == 1 ? "video.mp4" : (audioOn == 1 ? "audio.m4s" : null)}`;
-                    dlTask = spawn("aria2c", aria2Args.concat([url[videoOn == 1 ? 0 : (audioOn == 1 ? 1 : null)], '-d', path, '-o', fileName]));
+                    dlTask = spawn("aria2c", ARIA2_ARGS.concat([url[videoOn == 1 ? 0 : (audioOn == 1 ? 1 : null)], '-d', path, '-o', fileName]));
                     break;
                 default:
                     util.printErr("video and audio are all off!");
@@ -191,7 +191,7 @@ class Page extends Video {
                     break;
             }
         } else {
-            dlTask = spawn("aria2c", aria2Args.concat([url, '-d', path, '-o', fileName]));
+            dlTask = spawn("aria2c", ARIA2_ARGS.concat([url, '-d', path, '-o', fileName]));
         }
         dlTask.stdout.on('data', (data) => {
             if (data) {
@@ -226,10 +226,10 @@ let showQuality = (url, isDash) => {
         q = url.match(/-(\d+)\.(?:flv|mp4)\?/)[1];
     }
     if (q < 112) {
-        util.printInfo(qualityText[q]);
+        util.printInfo(QUALITY_TEXT[q]);
         util.printWarn("NOT 1080P高码率 or ERROR!");
     } else {
-        util.printInfo(qualityText[q]);
+        util.printInfo(QUALITY_TEXT[q]);
     }
 };
 

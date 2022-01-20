@@ -38,8 +38,9 @@ const node_notifier_1 = __importDefault(require("node-notifier"));
 const child_process_1 = require("child_process");
 const express_1 = __importDefault(require("express"));
 const path = __importStar(require("path"));
-const monitorRoomsSettingPath = path.resolve(`${__dirname}/../monitor-rooms.json`);
-const interval = 5 * 1000;
+const MONITOR_ROOMS_SETTING_PATH = path.resolve(`${__dirname}/../monitor-rooms.json`);
+const TEST_INTERVAL = 5 * 1000;
+const INTERVAL = TEST_INTERVAL;
 class MonitorRoom extends live_js_1.Room {
     constructor(id) {
         super(id);
@@ -52,39 +53,47 @@ class MonitorRoom extends live_js_1.Room {
         this._isAlert = false;
     }
 }
-const addRoom = (input, isAlert = true) => __awaiter(void 0, void 0, void 0, function* () {
-    let id = (0, live_js_1.getRoomID)(input);
-    let jsonDATA;
-    try {
-        jsonDATA = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
-    }
-    catch (error) {
-        if (error.code === "ENOENT") {
-            (0, util_js_1.printWarn)("No config file");
-            jsonDATA = {};
+function addRoom(input, isAlert = true) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let id = (0, live_js_1.getRoomID)(input);
+        let jsonDATA;
+        try {
+            jsonDATA = JSON.parse(fs.readFileSync(MONITOR_ROOMS_SETTING_PATH, 'utf-8'));
+        }
+        catch (error) {
+            if (error.code === "ENOENT") {
+                (0, util_js_1.printWarn)("No config file");
+                jsonDATA = {};
+            }
+            else {
+                (0, util_js_1.printErr)("Unknown error");
+                process.exit(0);
+            }
+        }
+        if (jsonDATA.hasOwnProperty(id)) {
+            (0, util_js_1.printErr)("room already exists!");
         }
         else {
-            (0, util_js_1.printErr)("Unknown error");
-            process.exit(0);
+            let newRoom = new MonitorRoom(id);
+            try {
+                yield newRoom.getInfo();
+                yield newRoom.getUserInfo();
+            }
+            catch (error) {
+                (0, util_js_1.printErr)(error);
+            }
+            let newMRoom = {
+                id,
+                isAlert: newRoom.isAlert,
+                uname: newRoom.uname
+            };
+            jsonDATA[id] = newMRoom;
+            fs.writeFileSync(MONITOR_ROOMS_SETTING_PATH, JSON.stringify(jsonDATA, null, 2), 'utf-8');
+            (0, util_js_1.printInfo)("add success");
         }
-    }
-    if (jsonDATA.hasOwnProperty(id)) {
-        (0, util_js_1.printErr)("room already exists!");
-    }
-    else {
-        let newRoom = new MonitorRoom(id);
-        yield newRoom.getInfo();
-        yield newRoom.getUserInfo();
-        let newMRoom = {
-            id,
-            isAlert: newRoom.isAlert,
-            uname: newRoom.uname
-        };
-        jsonDATA[id] = newMRoom;
-        fs.writeFileSync(monitorRoomsSettingPath, JSON.stringify(jsonDATA, null, 2), 'utf-8');
-        (0, util_js_1.printInfo)("add success");
-    }
-});
+    });
+}
+;
 const alertLives = (roomList) => __awaiter(void 0, void 0, void 0, function* () {
     for (const room of roomList) {
         room.isAlert && (yield alertLive(room));
@@ -138,7 +147,7 @@ function monitor() {
     return __awaiter(this, void 0, void 0, function* () {
         let monitorList;
         try {
-            monitorList = JSON.parse(fs.readFileSync(monitorRoomsSettingPath, 'utf-8'));
+            monitorList = JSON.parse(fs.readFileSync(MONITOR_ROOMS_SETTING_PATH, 'utf-8'));
         }
         catch (error) {
             if (error.code === "ENOENT") {
@@ -202,7 +211,7 @@ function monitor() {
                     }
                 }
             }));
-        }, interval);
+        }, INTERVAL);
     });
 }
 ;

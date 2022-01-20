@@ -3,9 +3,9 @@ const { config } = require('../util.js');
 const util = require('../util.js');
 const exec = require('child_process').exec;
 
-const playAPI = new URL("https://api.live.bilibili.com/room/v1/Room/playUrl");
-const infoAPI = new URL("https://api.live.bilibili.com/room/v1/Room/get_info");
-const userInfoAPI = new URL("http://api.live.bilibili.com/live_user/v1/Master/info");
+const PLAY_API = new URL("https://api.live.bilibili.com/room/v1/Room/playUrl");
+const INFO_API = new URL("https://api.live.bilibili.com/room/v1/Room/get_info");
+const USER_INFO_API = new URL("http://api.live.bilibili.com/live_user/v1/Master/info");
 
 let getRoomID = (input) => {
     let m = input.match(/^\d+$/);
@@ -27,9 +27,9 @@ class Room {
             platform: this.isHLS ? "h5" : "web"  //选h5有可能是hls，选web好像全是flv
         }
         for (const k in query) {
-            playAPI.searchParams.set(k, query[k]);
+            PLAY_API.searchParams.set(k, query[k]);
         }
-        return playAPI;
+        return PLAY_API;
     }
     async sendRequset2PlayAPI(quality) {
         let rurl = this.fillPlayAPIUrl(quality);
@@ -57,11 +57,11 @@ class Room {
         this.playUrl = response.data.durl[0].url;
     }
     async getInfo() {
-        infoAPI.searchParams.set("room_id", this.id)
+        INFO_API.searchParams.set("room_id", this.id)
         let options = {
-            hostname: infoAPI.hostname,
+            hostname: INFO_API.hostname,
             port: 80,
-            path: infoAPI.pathname + infoAPI.search,
+            path: INFO_API.pathname + INFO_API.search,
             method: 'GET',
             headers: {
                 'referer': 'http://live.bilibili.com/'
@@ -93,11 +93,11 @@ class Room {
     }
     async getUserInfo() {
         if (!this.uid) await this.getInfo();
-        userInfoAPI.searchParams.set("uid", this.uid);
+        USER_INFO_API.searchParams.set("uid", this.uid);
         let options = {
-            hostname: userInfoAPI.hostname,
+            hostname: USER_INFO_API.hostname,
             port: 80,
-            path: userInfoAPI.pathname + userInfoAPI.search,
+            path: USER_INFO_API.pathname + USER_INFO_API.search,
             method: 'GET',
             headers: {
                 'referer': 'http://live.bilibili.com/'
