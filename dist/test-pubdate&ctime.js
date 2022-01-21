@@ -9,9 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mainv_js_1 = require("../core/mainv.js");
+const video_js_1 = require("../core/video.js");
 (() => __awaiter(void 0, void 0, void 0, function* () {
-    let vdata = yield (0, mainv_js_1.getVideoInfo)(process.argv[2]);
+    let vdata = yield (0, video_js_1.getVideoInfo)(process.argv[2]);
     let times = {
         pubdate: vdata.pubdate,
         ctime: vdata.ctime

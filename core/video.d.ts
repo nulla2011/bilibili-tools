@@ -1,4 +1,4 @@
-declare namespace mainv {
+declare namespace video {
   function getVideoInfo(input: string): object;
 }
 

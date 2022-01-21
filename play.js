@@ -1,7 +1,7 @@
 const util = require('./util.js');
-const { Video } = require('./core/mainv.js');
-const { Page } = require('./core/mainv.js');
-const mainv = require('./core/mainv.js');
+const { Video } = require('./core/video.js');
+const { Page } = require('./core/video.js');
+const mainv = require('./core/video.js');
 
 const main = async (input, dash = false, videoOn = 1, audioOn = 1, hevc = false) => {
     let line;

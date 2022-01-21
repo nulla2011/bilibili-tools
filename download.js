@@ -1,7 +1,7 @@
 const util = require('./util.js');
-const { Video } = require('./core/mainv.js');
-const { Page } = require('./core/mainv.js');
-const mainv = require('./core/mainv.js');
+const { Video } = require('./core/video.js');
+const { Page } = require('./core/video.js');
+const mainv = require('./core/video.js');
 
 const main = async (input, path = util.config.dlPath, title, dash = false, videoOn = 1, audioOn = 1) => {
     let line;

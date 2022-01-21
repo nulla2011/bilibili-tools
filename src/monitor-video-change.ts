@@ -1,4 +1,4 @@
-import { getVideoInfo } from '../core/mainv.js';
+import { getVideoInfo } from '../core/video.js';
 import * as fs from 'fs';
 import notifier from 'node-notifier';
 
