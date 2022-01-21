@@ -1,6 +1,6 @@
-import { getRoomID, Room } from "../core/live.js";
+import { getRoomID, Room } from "./core/live.js";
 import * as fs from 'fs';
-import { formatDate, printErr, printWarn, printInfo } from "../util.js";
+import { formatDate, printErr, printWarn, printInfo } from "./utils";
 import notifier from 'node-notifier';
 import { exec } from 'child_process';
 import express from 'express';

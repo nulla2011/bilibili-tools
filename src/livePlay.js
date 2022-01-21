@@ -1,4 +1,4 @@
-const util = require('./util.js');
+const util = require('./utils');
 const { Room } = require('./core/live.js');
 const live = require('./core/live.js');
 

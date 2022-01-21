@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const video_js_1 = require("../core/video.js");
+const video_js_1 = require("./core/video.js");
 const fs = __importStar(require("fs"));
 const node_notifier_1 = __importDefault(require("node-notifier"));
 const normalInterval = 1 * 60 * 60 * 1000;

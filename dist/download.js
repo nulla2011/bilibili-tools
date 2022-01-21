@@ -1,19 +1,28 @@
-const util = require('./util.js');
-const { Video } = require('./core/video.js');
-const { Page } = require('./core/video.js');
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+const util = require('./utils');
+const { Video, Page } = require('./core/video.js');
 const mainv = require('./core/video.js');
-
-const main = async (input, path = util.config.dlPath, title, dash = false, videoOn = 1, audioOn = 1) => {
+const main = (input, path = util.config.dlPath, title, dash = false, videoOn = 1, audioOn = 1) => __awaiter(void 0, void 0, void 0, function* () {
     let line;
     if (input == undefined) {
         console.log("input link or BV or aid:");
-        line = await util.readlineSync();
-    } else {
+        line = yield util.readlineSync();
+    }
+    else {
         line = input;
     }
     let videoInfoData;
     try {
-        videoInfoData = await mainv.getVideoInfo(line);
+        videoInfoData = yield mainv.getVideoInfo(line);
     }
     catch (e) {
         util.printErr(e);
@@ -26,20 +35,23 @@ const main = async (input, path = util.config.dlPath, title, dash = false, video
     if (video.videos === 1) {
         dlList = video.pages;
         console.log("only 1 part, downloading..");
-    } else if (pageNum) {
+    }
+    else if (pageNum) {
         dlList = [video.pages[pageNum - 1]];
         console.log("page number has been inputed, downloading..");
-    } else {
+    }
+    else {
         for (let item of video.pages) {
             console.log(item.page.toString().padStart(2, '0'), item.part);
         }
         console.log(video.videos + " parts, which do you want?");
-        let inp = await util.readlineSync();
+        let inp = yield util.readlineSync();
         if (inp == '') {
             dlList = video.pages;
-        } else {
+        }
+        else {
             for (let i of inp.split(/[ ,]/)) {
-                dlList.push(video.pages[i - 1])
+                dlList.push(video.pages[i - 1]);
             }
         }
     }
@@ -47,7 +59,7 @@ const main = async (input, path = util.config.dlPath, title, dash = false, video
         let page = new Page(videoInfoData, pageInfo);
         if (title) {
             console.log(`change title to ${title}, continue? (y/n)`);
-            line = await util.readlineSync();
+            line = yield util.readlineSync();
             if (line == 'y') {
                 page.title = title;
             }
@@ -57,14 +69,15 @@ const main = async (input, path = util.config.dlPath, title, dash = false, video
         }
         try {
             page.download(path, videoOn, audioOn);
-        } catch (e) {
+        }
+        catch (e) {
             util.printErr(e);
         }
     }
-};
-
+});
 if (require.main === module) {
     main(process.argv[2]);
-} else {
-    module.exports = { main }
+}
+else {
+    module.exports = { main };
 }

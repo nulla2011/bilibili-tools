@@ -1,11 +1,11 @@
 const Erii = require('erii').default;
-const download = require('./download.js').main;
-const play = require('./play.js').main;
-const livePlay = require('./livePlay.js').main;
-const abv = require('./abv.js');
+const download = require('./dist/download.js').main;
+const play = require('./dist/play.js').main;
+const livePlay = require('./dist/livePlay.js').main;
+const abv = require('./dist/abv.js');
 
 Erii.setMetaInfo({
-    version: "0.1.0",
+    version: "0.2.0",
     name: "bilibili tools"
 });
 

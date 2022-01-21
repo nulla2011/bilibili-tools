@@ -31,9 +31,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const live_js_1 = require("../core/live.js");
+const live_js_1 = require("./core/live.js");
 const fs = __importStar(require("fs"));
-const util_js_1 = require("../util.js");
+const utils_1 = require("./utils");
 const node_notifier_1 = __importDefault(require("node-notifier"));
 const child_process_1 = require("child_process");
 const express_1 = __importDefault(require("express"));
@@ -62,16 +62,16 @@ function addRoom(input, isAlert = true) {
         }
         catch (error) {
             if (error.code === "ENOENT") {
-                (0, util_js_1.printWarn)("No config file");
+                (0, utils_1.printWarn)("No config file");
                 jsonDATA = {};
             }
             else {
-                (0, util_js_1.printErr)("Unknown error");
+                (0, utils_1.printErr)("Unknown error");
                 process.exit(0);
             }
         }
         if (jsonDATA.hasOwnProperty(id)) {
-            (0, util_js_1.printErr)("room already exists!");
+            (0, utils_1.printErr)("room already exists!");
         }
         else {
             let newRoom = new MonitorRoom(id);
@@ -80,7 +80,7 @@ function addRoom(input, isAlert = true) {
                 yield newRoom.getUserInfo();
             }
             catch (error) {
-                (0, util_js_1.printErr)(error);
+                (0, utils_1.printErr)(error);
             }
             let newMRoom = {
                 id,
@@ -89,7 +89,7 @@ function addRoom(input, isAlert = true) {
             };
             jsonDATA[id] = newMRoom;
             fs.writeFileSync(MONITOR_ROOMS_SETTING_PATH, JSON.stringify(jsonDATA, null, 2), 'utf-8');
-            (0, util_js_1.printInfo)("add success");
+            (0, utils_1.printInfo)("add success");
         }
     });
 }
@@ -195,12 +195,12 @@ function monitor() {
                 if (room.live_status !== oldStatus) {
                     yield room.getUserInfo();
                     if (room.live_status == 1) {
-                        console.log(`[${(0, util_js_1.formatDate)(new Date())}] ${room.uname} is live!`);
+                        console.log(`[${(0, utils_1.formatDate)(new Date())}] ${room.uname} is live!`);
                         liveRoomList.push(room);
                         room.isAlert && (yield alertLive(room));
                     }
                     else if (oldStatus == 1) {
-                        console.log(`[${(0, util_js_1.formatDate)(new Date())}] ${room.uname} just stopped live!`);
+                        console.log(`[${(0, utils_1.formatDate)(new Date())}] ${room.uname} just stopped live!`);
                         let i = liveRoomList.findIndex((e) => e.id === room.id);
                         i != -1 && liveRoomList.splice(i, 1);
                         node_notifier_1.default.notify({
@@ -220,7 +220,7 @@ if (process.argv[2] == "-a") {
         addRoom(process.argv[3]);
     }
     catch (error) {
-        (0, util_js_1.printErr)("add error!");
+        (0, utils_1.printErr)("add error!");
     }
 }
 else {

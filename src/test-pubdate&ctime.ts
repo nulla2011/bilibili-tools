@@ -1,4 +1,4 @@
-import { getVideoInfo } from '../core/video.js';
+import { getVideoInfo } from './core/video.js';
 
 interface video {
   pubdate: number;

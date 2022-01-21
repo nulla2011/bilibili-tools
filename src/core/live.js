@@ -1,6 +1,5 @@
-const { httpGet } = require('../util.js');
-const { config } = require('../util.js');
-const util = require('../util.js');
+const { httpGet,config } = require('../utils');
+const util = require('../utils');
 const exec = require('child_process').exec;
 
 const PLAY_API = new URL("https://api.live.bilibili.com/room/v1/Room/playUrl");

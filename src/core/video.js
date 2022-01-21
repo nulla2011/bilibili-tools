@@ -1,9 +1,6 @@
 const fs = require('fs');
-const { httpGet } = require('../util.js');
-const { readlineSync } = require('../util.js');
-const { cookie } = require('../util.js');
-const { config } = require('../util.js');
-const util = require('../util.js');
+const { httpGet, readlineSync, cookie, config } = require('../utils');
+const util = require('../utils');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
 
