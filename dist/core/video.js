@@ -70,6 +70,13 @@ class Video {
         this.videos = data.videos; //几个分p
         this.title = data.title;
         this.pages = data.pages; //分p信息的list
+        this.view = data.stat.view; //播放量
+        this.like = data.stat.like; //点赞
+        this.coin = data.stat.coin; //硬币
+        this.favorite = data.stat.favorite; //收藏
+        this.share = data.stat.share; //分享
+        this.reply = data.stat.reply; //回复
+        this.danmaku = data.stat.danmaku; //弹幕
     }
     showTitle() {
         util.printInfo(this.title);

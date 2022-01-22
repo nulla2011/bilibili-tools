@@ -4,3 +4,4 @@ config.json
 *.flv
 cache
 monitor-rooms.json
+bangumi_stats
