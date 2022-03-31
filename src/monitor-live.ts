@@ -17,7 +17,8 @@ interface IJson {
 }
 const MONITOR_ROOMS_SETTING_PATH = path.resolve(`${__dirname}/../monitor-rooms.json`);
 const TEST_INTERVAL = 5 * 1000;
-const INTERVAL = TEST_INTERVAL;
+const NORMAL_INTERVAL = 10 * 1000;
+const INTERVAL = NORMAL_INTERVAL;
 
 class MonitorRoom extends Room {
   private _isAlert: boolean;
@@ -63,7 +64,7 @@ async function addRoom(input: string, isAlert: boolean = true) {
     }
     jsonDATA[id] = newMRoom;
     fs.writeFileSync(MONITOR_ROOMS_SETTING_PATH, JSON.stringify(jsonDATA, null, 2), 'utf-8');
-    printInfo("add success");
+    printInfo(`add success: ${newMRoom.uname}`);
   }
 };
 const alertLives = async (roomList: MonitorRoom[]) => {

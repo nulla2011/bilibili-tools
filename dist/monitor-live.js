@@ -1,7 +1,11 @@
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -40,7 +44,8 @@ const express_1 = __importDefault(require("express"));
 const path = __importStar(require("path"));
 const MONITOR_ROOMS_SETTING_PATH = path.resolve(`${__dirname}/../monitor-rooms.json`);
 const TEST_INTERVAL = 5 * 1000;
-const INTERVAL = TEST_INTERVAL;
+const NORMAL_INTERVAL = 10 * 1000;
+const INTERVAL = NORMAL_INTERVAL;
 class MonitorRoom extends live_js_1.Room {
     constructor(id) {
         super(id);
@@ -89,7 +94,7 @@ function addRoom(input, isAlert = true) {
             };
             jsonDATA[id] = newMRoom;
             fs.writeFileSync(MONITOR_ROOMS_SETTING_PATH, JSON.stringify(jsonDATA, null, 2), 'utf-8');
-            (0, utils_1.printInfo)("add success");
+            (0, utils_1.printInfo)(`add success: ${newMRoom.uname}`);
         }
     });
 }

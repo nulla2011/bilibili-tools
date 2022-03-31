@@ -85,6 +85,13 @@ const printInfo = (t) => {
 const formatDate = (date) => {
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
 };
+let escape = (string) => {
+    return string.replace(/(["'$`\\])/g, '\\$1');
+}
+let clearIllegalChars = (string) => {
+    return string.replace(/[\\/:*?"<>|]/g, '_').replace(/!!/, '__');
+}
+
 
 let config, cookie;
 try {
@@ -128,5 +135,6 @@ module.exports = {
     printErr,
     printWarn,
     printInfo,
-    formatDate
+    formatDate,
+    clearIllegalChars
 }

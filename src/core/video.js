@@ -195,7 +195,7 @@ class Page extends Video {
                     break;
             }
         } else {
-            dlTask = spawn("aria2c", ARIA2_ARGS.concat([url, '-d', path, '-o', fileName]));
+            dlTask = spawn("aria2c", ARIA2_ARGS.concat([url, '-d', path, '-o', util.clearIllegalChars(fileName)]));      //不管是windows还是unix都有不允许当文件名的字符
         }
         dlTask.stdout.on('data', (data) => {
             if (data) {
