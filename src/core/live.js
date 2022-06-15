@@ -1,6 +1,7 @@
-const { httpGet,config } = require('../utils');
+const { config } = require('../utils');
 const util = require('../utils');
 const exec = require('child_process').exec;
+const axios = require('axios');
 
 const PLAY_API = new URL("https://api.live.bilibili.com/room/v1/Room/playUrl");
 const INFO_API = new URL("https://api.live.bilibili.com/room/v1/Room/get_info");
@@ -32,20 +33,11 @@ class Room {
     }
     async sendRequset2PlayAPI(quality) {
         let rurl = this.fillPlayAPIUrl(quality);
-        let options = {
-            hostname: rurl.hostname,
-            port: 80,
-            path: rurl.pathname + rurl.search,
-            method: 'GET',
-            headers: {
-                'referer': 'http://live.bilibili.com/'
-            }
+        let response = await axios.get(rurl.href);
+        if (response.data.code !== 0) {
+            throw "code:" + response.data.code + " message:" + response.data.message;
         }
-        let response = await httpGet(options);
-        if (response.code !== 0) {
-            throw "code:" + response.code + " message:" + response.message;
-        }
-        return response;
+        return response.data;
     }
     async getQualities() {
         let response = await this.sendRequset2PlayAPI(0);
@@ -56,27 +48,22 @@ class Room {
         this.playUrl = response.data.durl[0].url;
     }
     async getInfo() {
-        INFO_API.searchParams.set("room_id", this.id)
-        let options = {
-            hostname: INFO_API.hostname,
-            port: 80,
-            path: INFO_API.pathname + INFO_API.search,
-            method: 'GET',
-            headers: {
-                'referer': 'http://live.bilibili.com/'
+        let response = await axios.get(INFO_API.href, {
+            params: {
+                room_id: this.id
             }
+        });
+        let rdata = response.data
+        if (rdata.code !== 0) {
+            throw "code:" + rdata.code + " message:" + rdata.message;
         }
-        let response = await httpGet(options);
-        if (response.code !== 0) {
-            throw "code:" + response.code + " message:" + response.message;
-        }
-        this.online = response.data.online;    //人气
-        this.live_status = response.data.live_status;   //播没播
-        this.title = response.data.title;
-        this.live_time = response.data.live_time;     //开播时间
-        this.parent_area_name = response.data.parent_area_name;
-        this.area_name = response.data.area_name;
-        this.uid = response.data.uid;       //同主站uid
+        this.online = rdata.data.online;    //人气
+        this.live_status = rdata.data.live_status;   //播没播
+        this.title = rdata.data.title;
+        this.live_time = rdata.data.live_time;     //开播时间
+        this.parent_area_name = rdata.data.parent_area_name;
+        this.area_name = rdata.data.area_name;
+        this.uid = rdata.data.uid;       //同主站uid
     }
     async play(quality) {
         await this.getPlayurl(quality);
@@ -92,22 +79,17 @@ class Room {
     }
     async getUserInfo() {
         if (!this.uid) await this.getInfo();
-        USER_INFO_API.searchParams.set("uid", this.uid);
-        let options = {
-            hostname: USER_INFO_API.hostname,
-            port: 80,
-            path: USER_INFO_API.pathname + USER_INFO_API.search,
-            method: 'GET',
-            headers: {
-                'referer': 'http://live.bilibili.com/'
+        let response = await axios.get(USER_INFO_API.href, {
+            params:{
+                uid: this.uid
             }
+        });
+        let rdata = response.data;
+        if (rdata.code !== 0) {
+            throw "code:" + rdata.code + " message:" + rdata.message;
         }
-        let response = await httpGet(options);
-        if (response.code !== 0) {
-            throw "code:" + response.code + " message:" + response.message;
-        }
-        this.uname = response.data.info.uname;
-        this.uface = response.data.info.face;
+        this.uname = rdata.data.info.uname;
+        this.uface = rdata.data.info.face;
     }
 }
 

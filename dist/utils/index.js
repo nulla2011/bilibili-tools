@@ -154,6 +154,5 @@ module.exports = {
     printWarn,
     printInfo,
     formatDate,
-    escape,
     clearIllegalChars
 };
