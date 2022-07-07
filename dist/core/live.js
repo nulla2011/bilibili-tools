@@ -67,6 +67,8 @@ class Room {
                 params: {
                     room_id: this.id
                 }
+            }).catch((error) => {
+                util.handleAxiosErr(error);
             });
             let rdata = response.data;
             if (rdata.code !== 0) {
@@ -104,6 +106,8 @@ class Room {
                 params: {
                     uid: this.uid
                 }
+            }).catch((error) => {
+                util.handleAxiosErr(error);
             });
             let rdata = response.data;
             if (rdata.code !== 0) {

@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 const http = require('http');
 const readline = require('readline');
 const fs = require('fs');
+const { error } = require('console');
 let chalk;
 try {
     chalk = require('chalk');
@@ -104,6 +105,19 @@ let escape = (string) => {
 let clearIllegalChars = (string) => {
     return string.replace(/[\\/:*?"<>|]/g, '_').replace(/!!/, '__');
 };
+const handleAxiosErr = (error) => {
+    // if (error.code == 'ETIMEDOUT') {
+    //     printErr(`[${formatDate(new Date())}] ${error.code} ${error.address}\n${error.request._currentUrl}`);
+    // } else if (error.code == 'ENOTFOUND') {
+    //     printErr(`[${formatDate(new Date())}] ${error.code} ${error.hostname}\n${error.request._currentUrl}`);
+    // } else if (error.code == 'ECONNRESET') {
+    //     printErr(`[${util.formatDate(new Date())}] ${error.code}\n${error.request._currentUrl}`);
+    // } else {
+    //     printErr(error);
+    // }
+    // printErr(`[${formatDate(new Date())}] ${error}`);
+    throw `[${formatDate(new Date())}] ${error} at ${error.request._currentUrl}`;
+};
 let config, cookie;
 try {
     config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
@@ -154,5 +168,6 @@ module.exports = {
     printWarn,
     printInfo,
     formatDate,
-    clearIllegalChars
+    clearIllegalChars,
+    handleAxiosErr
 };

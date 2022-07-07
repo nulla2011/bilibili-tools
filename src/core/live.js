@@ -52,6 +52,8 @@ class Room {
             params: {
                 room_id: this.id
             }
+        }).catch((error) => {
+            util.handleAxiosErr(error);
         });
         let rdata = response.data
         if (rdata.code !== 0) {
@@ -80,9 +82,11 @@ class Room {
     async getUserInfo() {
         if (!this.uid) await this.getInfo();
         let response = await axios.get(USER_INFO_API.href, {
-            params:{
+            params: {
                 uid: this.uid
             }
+        }).catch((error) => {
+            util.handleAxiosErr(error);
         });
         let rdata = response.data;
         if (rdata.code !== 0) {
