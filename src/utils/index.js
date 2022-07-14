@@ -1,7 +1,6 @@
 const http = require('http');
 const readline = require('readline');
 const fs = require('fs');
-const { error } = require('console');
 let chalk;
 try {
     chalk = require('chalk');
@@ -124,26 +123,27 @@ try {
         printErr("Unknown error");
     }
 }
-try {
-    cookie = fs.readFileSync(config.cookieFile, 'utf8');
-} catch (error) {
-    if (error.code == "ENOENT") {
-        printErr("No cookie file, creating..");
-        try {
-            fs.copyFileSync(config.cookieFile, `${config.cookieFile}.old`);
-        } catch (e) { } finally {
-            fs.writeFileSync(config.cookieFile, "");
-            console.log("Create complete! Please edit cookies.ck");
-            process.exit(0);
-        }
-    } else {
-        printErr("Unknown error");
-    }
-}
+// try {
+//     cookie = fs.readFileSync(config.cookieFile, 'utf8');
+// } catch (error) {
+//     if (error.code == "ENOENT") {
+//         printErr("No cookie file, creating..");
+//         try {
+//             fs.copyFileSync(config.cookieFile, `${config.cookieFile}.old`);
+//         } catch (e) { } finally {
+//             fs.writeFileSync(config.cookieFile, "");
+//             console.log("Create complete! Please edit cookies.ck");
+//             process.exit(0);
+//         }
+//     } else {
+//         printErr("Unknown error");
+//     }
+// }
+let session = config.session;
 
 module.exports = {
     config,
-    cookie,
+    session,
     readlineSync,
     httpGet,
     printErr,
@@ -151,5 +151,5 @@ module.exports = {
     printInfo,
     formatDate,
     clearIllegalChars,
-    handleAxiosErr
+    handleAxiosErr,
 }

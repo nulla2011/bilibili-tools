@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { httpGet, readlineSync, cookie, config } = require('../utils');
+const { httpGet, readlineSync, session, config } = require('../utils');
 const util = require('../utils');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
@@ -112,7 +112,7 @@ class Page extends Video {
             method: 'GET',
             headers: {
                 'referer': 'https://www.bilibili.com/',
-                'cookie': cookie
+                'cookie': `SESSDATA=${session}`
             }
         };
         let response = await httpGet(options);
