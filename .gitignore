@@ -5,3 +5,4 @@ config.json
 cache
 monitor-rooms.json
 bangumi_stats
+.vscode
