@@ -1,6 +1,7 @@
 const http = require('http');
 const readline = require('readline');
 const fs = require('fs');
+let config = require('../../config.json')
 let chalk;
 try {
     chalk = require('chalk');
@@ -85,11 +86,14 @@ const printInfo = (t) => {
 const formatDate = (date) => {
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
 };
-let escape = (string) => {
+const formatTime = (date) => {
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
+};
+const escape = (string) => {
     return string.replace(/(["'$`\\])/g, '\\$1');
 }
-let clearIllegalChars = (string) => {
-    return string.replace(/[\\/:*?"<>|]/g, '_').replace(/!!/, '__');
+const clearIllegalChars = (string) => {
+    return string.replace(/[\\/:*?"<>|]/g, '_').replace(/!!/g, '__');
 }
 const handleAxiosErr = (error) => {
     // if (error.code == 'ETIMEDOUT') {
@@ -106,23 +110,23 @@ const handleAxiosErr = (error) => {
 }
 
 
-let config, cookie;
-try {
-    config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
-} catch (error) {
-    if (error.code == "ENOENT") {
-        printErr("No config file, creating..");
-        try {
-            fs.copyFileSync("config.json", "config.json.old");
-        } catch (e) { } finally {
-            fs.copyFileSync("config-example.json", "config.json");
-            console.log("Create complete! Please edit config.json");
-            process.exit(0);
-        }
-    } else {
-        printErr("Unknown error");
-    }
-}
+// let config, cookie;
+// try {
+//     config = JSON.parse(fs.readFileSync('../config.json', 'utf8'));
+// } catch (error) {
+//     if (error.code == "ENOENT") {
+//         printErr("No config file, creating..");
+//         try {
+//             fs.copyFileSync("config.json", "config.json.old");
+//         } catch (e) { } finally {
+//             fs.copyFileSync("config-example.json", "config.json");
+//             console.log("Create complete! Please edit config.json");
+//             process.exit(0);
+//         }
+//     } else {
+//         printErr("Unknown error");
+//     }
+// }
 // try {
 //     cookie = fs.readFileSync(config.cookieFile, 'utf8');
 // } catch (error) {
@@ -150,6 +154,7 @@ module.exports = {
     printWarn,
     printInfo,
     formatDate,
+    formatTime,
     clearIllegalChars,
     handleAxiosErr,
 }

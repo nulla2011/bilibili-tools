@@ -93,6 +93,5 @@
   },
   "exclude": [
     "./dist",
-    "./btools.js"
   ]
 }

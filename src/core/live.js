@@ -56,7 +56,7 @@ class Room {
             util.handleAxiosErr(error);
         });
         let rdata = response.data
-        if (rdata.code !== 0) {
+        if (rdata.code != 0) {
             throw "code:" + rdata.code + " message:" + rdata.message;
         }
         this.online = rdata.data.online;    //人气
@@ -66,6 +66,7 @@ class Room {
         this.parent_area_name = rdata.data.parent_area_name;
         this.area_name = rdata.data.area_name;
         this.uid = rdata.data.uid;       //同主站uid
+        this.room_id = rdata.data.room_id;   //真实 id
     }
     async play(quality) {
         await this.getPlayurl(quality);

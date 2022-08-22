@@ -9,6 +9,7 @@ declare class Room {
   live_time: string;
   uface: string;
   online: number;
+  room_id: number;
   constructor(ID: number);
   getInfo();
   getUserInfo();

@@ -1,11 +1,12 @@
 const Erii = require('erii').default;
-const download = require('./dist/download.js').main;
-const play = require('./dist/play.js').main;
-const livePlay = require('./dist/livePlay.js').main;
-const abv = require('./dist/abv.js');
+const download = require('./download.js').main;
+const play = require('./play.js').main;
+const livePlay = require('./livePlay.js').main;
+const liveDanmaku = require('./live-danmaku.js').main;
+const abv = require('./abv.js');
 
 Erii.setMetaInfo({
-    version: "0.2.0",
+    version: "0.3.0",
     name: "bilibili tools"
 });
 
@@ -118,6 +119,20 @@ Erii.bind({
     }
 }, (ctx) => {
     console.log(abv.decode(ctx.getArgument().toString()));
+});
+Erii.bind({
+    name: ["livedm", "ldm"],
+    description: "show live danmaku",
+    argument: {
+        name: "input",
+        description: "input"
+    }
+}, (ctx, options) => {
+    liveDanmaku(ctx.getArgument().toString(), { showR: options.showR });
+});
+Erii.addOption({
+    name: ["showrq", "rq"],
+    command: "livedm",
 });
 
 Erii.default(() => {
