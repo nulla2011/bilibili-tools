@@ -1,12 +1,16 @@
 import WebSocket from 'ws';
 import decompress from 'Brotli/decompress';
 import { Room, getRoomID } from './core/live';
-import { formatTime, printErr } from './utils';
+import { formatTime, formatDate, printErr } from './utils';
 import axios from 'axios';
 import assert from 'node:assert';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const DANMAKU_INFO = new URL('https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo');
 const wsURL = new URL('wss://dsa-cn-live-comet-01.chat.bilibili.com:2245/sub'); //用别的 URL 会连不上？
+const LOG_PATH =
+  process.platform === 'win32' ? process.env.USERPROFILE + '/Documents/btools/' : '~/.btools/';
 
 const getWsURL = async (id) => {
   DANMAKU_INFO.searchParams.set('type', '0');
@@ -27,6 +31,28 @@ interface Iconfig {
 const wsService = (roomid: number, config?: Iconfig) => {
   let timer: NodeJS.Timer;
   let ws = new WebSocket(wsURL);
+  let log_file = fs.createWriteStream(
+    path.resolve(LOG_PATH, `${formatDate(new Date()).slice(2, 10)}-live-${roomid}.log`),
+    {
+      flags: 'a',
+      encoding: 'utf8',
+    }
+  );
+  let setVerifyData = (string: string) => {
+    const encoder = new TextEncoder();
+    let stringBuffer = encoder.encode(string);
+    let buffer = new ArrayBuffer(stringBuffer.byteLength + 16);
+    let view = new DataView(buffer);
+    view.setUint32(0, stringBuffer.byteLength + 16);
+    view.setUint16(4, 16);
+    view.setUint16(6, 1);
+    view.setUint32(8, 7);
+    view.setUint32(12, 1);
+    for (let i = 0; i < stringBuffer.byteLength; i++) {
+      view.setUint8(16 + i, stringBuffer[i]);
+    }
+    return buffer;
+  };
   ws.onopen = (e) => {
     console.log('opened');
     let verify = {
@@ -48,21 +74,6 @@ const wsService = (roomid: number, config?: Iconfig) => {
       v.setUint32(12, 1);
       ws.send(buffer);
     }, 30000);
-  };
-  let setVerifyData = (string: string) => {
-    const encoder = new TextEncoder();
-    let stringBuffer = encoder.encode(string);
-    let buffer = new ArrayBuffer(stringBuffer.byteLength + 16);
-    let view = new DataView(buffer);
-    view.setUint32(0, stringBuffer.byteLength + 16);
-    view.setUint16(4, 16);
-    view.setUint16(6, 1);
-    view.setUint32(8, 7);
-    view.setUint32(12, 1);
-    for (let i = 0; i < stringBuffer.byteLength; i++) {
-      view.setUint8(16 + i, stringBuffer[i]);
-    }
-    return buffer;
   };
   ws.onerror = (e) => console.log(e);
   ws.onclose = (e) => {
@@ -148,13 +159,16 @@ const wsService = (roomid: number, config?: Iconfig) => {
         if (data.cmd == 'DANMU_MSG') {
           let time = new Date(data.info[9].ts * 1000);
           console.log(`[${formatTime(time)}] ${data.info[2][1]}: ${data.info[1]}`);
+          log_file.write(`[${formatTime(time)}] ${data.info[2][1]}: ${data.info[1]}\n`);
         }
         if (data.cmd == 'INTERACT_WORD') {
           let time = new Date(data.data.timestamp * 1000);
           if (data.data.msg_type == 2) {
             console.log(`[${formatTime(time)}] ${data.data.uname} 关注了直播间`);
+            log_file.write(`[${formatTime(time)}] ${data.data.uname} 关注了直播间\n`);
           } else {
             console.log(`[${formatTime(time)}] ${data.data.uname} 进入直播间`);
+            log_file.write(`[${formatTime(time)}] ${data.data.uname} 进入直播间\n`);
           }
         }
         if (data.cmd == 'SEND_GIFT') {
@@ -163,6 +177,11 @@ const wsService = (roomid: number, config?: Iconfig) => {
             `[${formatTime(time)}] ${data.data.uname} ${data.data.action} ${data.data.giftName} x ${
               data.data.num
             }`
+          );
+          log_file.write(
+            `[${formatTime(time)}] ${data.data.uname} ${data.data.action} ${data.data.giftName} x ${
+              data.data.num
+            }\n`
           );
         }
       }
