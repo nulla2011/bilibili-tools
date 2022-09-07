@@ -149,7 +149,6 @@ module.exports = {
     config,
     session,
     readlineSync,
-    httpGet,
     printErr,
     printWarn,
     printInfo,

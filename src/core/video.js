@@ -1,8 +1,9 @@
 const fs = require('fs');
-const { httpGet, readlineSync, session, config } = require('../utils');
+const { readlineSync, session, config, handleAxiosErr } = require('../utils');
 const util = require('../utils');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
+const axios = require('axios');
 
 const VIEW_API = new URL("https://api.bilibili.com/x/web-interface/view");
 const PLAYURL_API = new URL("https://api.bilibili.com/x/player/playurl");
@@ -42,13 +43,7 @@ let getVideoInfo = async (input) => {
     }
     let parameters = mbvid ? ["bvid", mbvid[0]] : maid ? ["aid", maid[1]] : null;
     VIEW_API.searchParams.set(...parameters);
-    let options = {
-        hostname: VIEW_API.hostname,
-        port: 80,
-        path: VIEW_API.pathname + VIEW_API.search,
-        method: 'GET'
-    };
-    let response = await httpGet(options);
+    let response = await axios.get(VIEW_API.href).then(response => response.data).catch(err => handleAxiosErr(err));
     if (response.code !== 0) {
         throw "code:" + response.code + " message:" + response.message;
     }
@@ -105,17 +100,13 @@ class Page extends Video {
     }
     async getPlayurl() {
         let rurl = this.fillPlayAPIUrl();
-        let options = {
-            hostname: rurl.hostname,
-            port: 80,
-            path: rurl.pathname + rurl.search,
-            method: 'GET',
+        console.log(session);
+        let response = await axios.get(rurl.href, {
             headers: {
                 'referer': 'https://www.bilibili.com/',
                 'cookie': `SESSDATA=${session}`
             }
-        };
-        let response = await httpGet(options);
+        }).then(response => response.data).catch(err => handleAxiosErr(err));
         if (response.code !== 0) {
             throw "code:" + response.code + " message:" + response.message;
         }
