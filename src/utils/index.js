@@ -143,12 +143,15 @@ const handleAxiosErr = (error) => {
 //         printErr("Unknown error");
 //     }
 // }
-let session = config.session;
+let session = config.SESSDATA;
+let bili_jct = config.bili_jct;
 
 module.exports = {
     config,
     session,
+    bili_jct,
     readlineSync,
+    httpGet,
     printErr,
     printWarn,
     printInfo,

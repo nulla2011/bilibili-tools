@@ -71,7 +71,7 @@ class Room {
     async play(quality) {
         await this.getPlayurl(quality);
         // console.log(this.playUrl);
-        let cmdString = `mpv "${this.playUrl}"`;
+        let cmdString = `mpv --referrer="https://live.bilibili.com" "${this.playUrl}"`;
         exec(cmdString, { maxBuffer: 1024 * 500 }, (err, stdout, stderr) => {
             if (err) {
                 util.printErr(err);

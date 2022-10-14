@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { readlineSync, session, config, handleAxiosErr } = require('../utils');
+const { readlineSync, session, bili_jct, config, handleAxiosErr } = require('../utils');
 const util = require('../utils');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
@@ -104,7 +104,7 @@ class Page extends Video {
         let response = await axios.get(rurl.href, {
             headers: {
                 'referer': 'https://www.bilibili.com/',
-                'cookie': `SESSDATA=${session}`
+                'cookie': `SESSDATA=${session}; bili_jct=${bili_jct}`
             }
         }).then(response => response.data).catch(err => handleAxiosErr(err));
         if (response.code !== 0) {
