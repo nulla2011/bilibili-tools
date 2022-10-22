@@ -89,7 +89,7 @@ class Page extends Video {
             cid: this.cid,
             qn: config.bestQuality,
             fnver: 0,
-            fnval: this.isDASH ? 16 : 0,      //有其他选项(https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/video/videostream_url.md#fnval%E8%A7%86%E9%A2%91%E6%B5%81%E6%A0%BC%E5%BC%8F%E6%A0%87%E8%AF%86)
+            fnval: this.isDASH ? 16 : 17,      //有其他选项(https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/video/videostream_url.md#fnval%E8%A7%86%E9%A2%91%E6%B5%81%E6%A0%BC%E5%BC%8F%E6%A0%87%E8%AF%86)
             player: 1,
             otype: "json"
         }
