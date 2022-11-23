@@ -1,9 +1,10 @@
 const fs = require('fs');
-const { readlineSync, session, bili_jct, config, handleAxiosErr } = require('../utils');
-const util = require('../utils');
+const { readlineSync, session, config, handleAxiosErr, showExtension } = require('../utils');
+const utils = require('../utils');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
 const axios = require('axios');
+const { rejects } = require('assert');
 
 const VIEW_API = new URL("https://api.bilibili.com/x/web-interface/view");
 const PLAYURL_API = new URL("https://api.bilibili.com/x/player/playurl");
@@ -65,7 +66,7 @@ class Video {
         this.danmaku = data.stat.danmaku;   //弹幕
     }
     showTitle() {
-        util.printInfo(this.title);
+        utils.printInfo(this.title);
     }
 }
 class Page extends Video {
@@ -89,7 +90,7 @@ class Page extends Video {
             cid: this.cid,
             qn: config.bestQuality,
             fnver: 0,
-            fnval: this.isDASH ? 16 : 17,      //有其他选项(https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/video/videostream_url.md#fnval%E8%A7%86%E9%A2%91%E6%B5%81%E6%A0%BC%E5%BC%8F%E6%A0%87%E8%AF%86)
+            fnval: this.isDASH ? 16 : 17,      //有其他选项(https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/video/videostream_url.md#fnval%E8%A7%86%E9%A2%91%E6%B5%81%E6%A0%BC%E5%BC%8F%E6%A0%87%E8%AF%86) //应该说 0 改成 17 了？
             player: 1,
             otype: "json"
         }
@@ -100,11 +101,11 @@ class Page extends Video {
     }
     async getPlayurl() {
         let rurl = this.fillPlayAPIUrl();
-        console.log(session);
+        // console.log(session);
         let response = await axios.get(rurl.href, {
             headers: {
                 'referer': 'https://www.bilibili.com/',
-                'cookie': `SESSDATA=${session}; bili_jct=${bili_jct}`
+                'cookie': `SESSDATA=${session};`
             }
         }).then(response => response.data).catch(err => handleAxiosErr(err));
         if (response.code !== 0) {
@@ -114,9 +115,9 @@ class Page extends Video {
         let quality = response.data.quality;
         if (quality != highestQuality) {
             if (quality == 64) {
-                util.printErr("WARNING: cookie may be invalid");
+                utils.printErr("WARNING: cookie may be invalid");
             }
-            util.printErr(`WARNING: the max quality is:\n${QUALITY_TEXT[highestQuality]}\n,but the quality will be downloaded/played is\n${QUALITY_TEXT[quality]}\ncontinue?(y/n)`);
+            utils.printErr(`WARNING: the max quality is:\n${QUALITY_TEXT[highestQuality]}\n,but the quality will be downloaded/played is\n${QUALITY_TEXT[quality]}\ncontinue?(y/n)`);
             let line = await readlineSync();
             if (line == 'n') {
                 process.exit();
@@ -126,36 +127,37 @@ class Page extends Video {
             let vQualityMatch = response.data.dash.video.filter(element => element.id == quality);
             let vUrl = vQualityMatch.find(el => el.codecs.startsWith(this.isHevc ? 'hev' : 'avc')).baseUrl;
             let audioBestQuality = response.data.dash.audio.reduce((max, cur) => (cur.id > max.id) ? cur : max);
-            util.printInfo(`audio quality: ${audioBestQuality.id}`);
-            return [vUrl, audioBestQuality.baseUrl];
+            utils.printInfo(`audio quality: ${audioBestQuality.id}`);
+            return { v: vUrl, a: audioBestQuality.baseUrl };
         } else {
-            return response.data.durl[0].url;
+            return { v: response.data.durl[0].url };
         }
     }
     async play(videoOn = 1, audioOn = 1) {
         let url = await this.getPlayurl();
-        console.log(url);
-        showQuality(url, this.isDASH); //根据url推断清晰度更直接
+        // console.log(url);
+        // warnMp4(url);
+        showQuality(url); //根据url推断清晰度更直接
         let cmdString;
         if (this.isDASH) {
             switch (videoOn + audioOn) {
                 case 2:
-                    cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url[0]}" --audio-file="${url[1]}"`;
+                    cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url.v}" --audio-file="${url.a}"`;
                     break;
                 case 1:
-                    cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url[videoOn == 1 ? 0 : (audioOn == 1 ? 1 : null)]}"`;
+                    cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url[videoOn == 1 ? "v" : (audioOn == 1 ? "a" : null)]}"`;
                     break;
                 default:
-                    util.printErr("video and audio are all off!");
+                    utils.printErr("video and audio are all off!");
                     process.exit();
                     break;
             }
         } else {
-            cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url}"`;
+            cmdString = `mpv --no-ytdl --referrer="https://www.bilibili.com" "${url.v}"`;
         }
         exec(cmdString, (err, stdout, stderr) => {
             if (err) {
-                util.printErr(err);
+                utils.printErr(err);
             } else {
                 console.log(stdout);
             }
@@ -164,48 +166,86 @@ class Page extends Video {
     async download(path, videoOn = 1, audioOn = 1) {
         let url = await this.getPlayurl();
         console.log(`P${this.page}: `);    //low quality warning
-        showQuality(url, this.isDASH);
+        warnMp4(url);
+        showQuality(url);
         let fileName = `${this.aid} - ${this.title}.flv`;
         if (this.videos > 1) {
             fileName = fileName.slice(0, -4) + `_p${this.page}_${this.part}.flv`;
         }
-        let dlTask;
+        let dlTask, dlTask2;
+        let videoName, audioName
         if (this.isDASH) {
             switch (videoOn + audioOn) {
                 case 2:
-                    console.log("还没写，话说为什么要用这种方法下载呢？");
-                    process.exit();
+                    //console.log("还没写，话说为什么要用这种方法下载呢？");  //这下不得不用 dash 了
+                    videoName = fileName.slice(0, -4) + "_video.mp4";
+                    audioName = fileName.slice(0, -4) + "_audio.m4s";
+                    dlTask = spawn("aria2c", ARIA2_ARGS.concat([url.v, '-d', path, '-o', videoName]));
+                    dlTask2 = spawn("aria2c", ARIA2_ARGS.concat([url.a, '-d', path, '-o', audioName]));
                     break;
                 case 1:
                     fileName = fileName.slice(0, -4) + `_${videoOn == 1 ? "video.mp4" : (audioOn == 1 ? "audio.m4s" : null)}`;
-                    dlTask = spawn("aria2c", ARIA2_ARGS.concat([url[videoOn == 1 ? 0 : (audioOn == 1 ? 1 : null)], '-d', path, '-o', fileName]));
+                    dlTask = spawn("aria2c", ARIA2_ARGS.concat([url[videoOn == 1 ? "v" : (audioOn == 1 ? "a" : null)], '-d', path, '-o', fileName]));
                     break;
                 default:
-                    util.printErr("video and audio are all off!");
+                    utils.printErr("video and audio are all off!");
                     process.exit();
                     break;
             }
         } else {
-            dlTask = spawn("aria2c", ARIA2_ARGS.concat([url, '-d', path, '-o', util.clearIllegalChars(fileName)]));      //不管是windows还是unix都有不允许当文件名的字符
+            dlTask = spawn("aria2c", ARIA2_ARGS.concat([url.v, '-d', path, '-o', utils.clearIllegalChars(fileName)]));      //不管是windows还是unix都有不允许当文件名的字符
         }
+        let task1 = new Promise((resolve, reject) => {
+            dlTask.on("close", (code) => {
+                utils.printInfo(`child process ${this.page} (video) exited with code ${code}`);
+                resolve();
+            });
+        });
         dlTask.stdout.on('data', (data) => {
             if (data) {
                 console.log(`P${this.page}: ${data}`);
             }
         });
         dlTask.stderr.on('data', (data) => {
-            console.log(`stderr: ${data}`);
+            utils.printErr(`stderr: ${data}`);
         });
-        dlTask.on("close", (code) => {
-            console.log(`child process ${this.page} exited with code ${code}`);
+        let task2;
+        if (dlTask2) {
+            task2 = new Promise((resolve, reject) => {
+                dlTask2.on("close", (code) => {
+                    utils.printInfo(`child process ${this.page} (audio) exited with code ${code}`);
+                    resolve();
+                });
+            });
+            dlTask2.stdout.on('data', (data) => {
+                if (data) {
+                    console.log(`P${this.page} (audio): ${data}`);
+                }
+            });
+            dlTask2.stderr.on('data', (data) => {
+                utils.printErr(`stderr: ${data}`);
+            });
+        }
+        await Promise.all([task1, task2]).then(() => {
             if (audioOn && !videoOn) {
                 console.log("transcoding...");
-                exec(`ffmpeg -i "${path + "/" + fileName}" -c:a copy "${path + "/" + fileName.slice(0, -4) + ".m4a"}"`, (err, stdout, stderr) => {
+                exec(`ffmpeg -i "${path + "/" + fileName}" -c:a copy "${path + "/" + fileName.slice(0, -4) + "_audio.m4a"}"`, (err, stdout, stderr) => {
                     if (err) {
-                        util.printErr(err);
+                        utils.printErr(err);
                     } else {
                         console.log(stdout);
                         fs.unlinkSync(`${path}/${fileName}`);
+                    }
+                });
+            } else if (audioOn && videoOn) {
+                console.log("transcoding...");
+                exec(`ffmpeg -i "${path + "/" + videoName}" -i "${path + "/" + audioName}" -c:v copy -c:a copy "${path + "/" + fileName.slice(0, -4) + ".mp4"}"`, (err, stdout, stderr) => {
+                    if (err) {
+                        utils.printErr(err);
+                    } else {
+                        console.log(stdout);
+                        fs.unlinkSync(`${path}/${videoName}`);
+                        fs.unlinkSync(`${path}/${audioName}`);
                     }
                 });
             }
@@ -213,20 +253,23 @@ class Page extends Video {
     }
 }
 
-let showQuality = (url, isDash) => {
-    let q;
-    if (isDash) {
-        q = url[0].match(/-30+(\d+)\.m4s\?/)[1];
-    } else {
-        q = url.match(/-(\d+)\.(?:flv|mp4)\?/)[1];
+let showQuality = (url) => {
+    let m = url.v.match(/-(\d+)\.(flv|mp4|m4s)\?/);
+    if (m[2] === "m4s") {
+        m[1] = m[1] * 1 - 30000;
     }
-    if (q < 112) {
-        util.printInfo(QUALITY_TEXT[q]);
-        util.printWarn("NOT 1080P高码率 or ERROR!");
-    } else {
-        util.printInfo(QUALITY_TEXT[q]);
+    utils.printInfo(QUALITY_TEXT[m[1]]);
+    if (m[1] < 112) {
+        utils.printWarn("NOT 1080P高码率 or ERROR!");
     }
 };
+let warnMp4 = (url) => {
+    if (showExtension(url.v) === "mp4") {
+        utils.printErr("format is mp4,please try DASH!!! (--4)");
+        console.log(url.v);
+        process.exit(0);
+    }
+}
 
 module.exports = {
     Video,

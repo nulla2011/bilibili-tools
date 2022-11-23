@@ -108,6 +108,9 @@ const handleAxiosErr = (error) => {
     // printErr(`[${formatDate(new Date())}] ${error}`);
     throw `[${formatDate(new Date())}] ${error} at ${error.request._currentUrl}`;
 }
+const showExtension = (url) => {
+    return url.match(/(?<=\/[^/.]+\.)\w+(?=\?)/)[0];
+}
 
 
 // let config, cookie;
@@ -144,12 +147,12 @@ const handleAxiosErr = (error) => {
 //     }
 // }
 let session = config.SESSDATA;
-let bili_jct = config.bili_jct;
+// let bili_jct = config.bili_jct;
 
 module.exports = {
     config,
     session,
-    bili_jct,
+    // bili_jct,
     readlineSync,
     httpGet,
     printErr,
@@ -159,4 +162,5 @@ module.exports = {
     formatTime,
     clearIllegalChars,
     handleAxiosErr,
+    showExtension,
 }

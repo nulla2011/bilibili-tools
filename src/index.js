@@ -19,10 +19,15 @@ Erii.bind({
     }
 }, (ctx, options) => {
     let dash = options.dash;
+    let video = options.video ? 1 : 0;
+    let audio = options.audio ? 1 : 0;
+    if ((options.dash || options.hevc) && !(options.video || options.audio)) {
+        [video, audio] = [1, 1];
+    }
     if (options.video || options.audio) {
         dash = true;
     }
-    download(ctx.getArgument().toString(), options.output, options.title, dash, options.video ? 1 : 0, options.audio ? 1 : 0);
+    download(ctx.getArgument().toString(), options.output, options.title, dash, video, audio);
 });
 Erii.addOption({
     name: ["output", "o"],

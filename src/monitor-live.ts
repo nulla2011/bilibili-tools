@@ -1,6 +1,6 @@
-import { getRoomID, Room } from "./core/live.js";
+import { getRoomID, Room } from './core/live.js';
 import * as fs from 'fs';
-import { formatDate, printErr, printWarn, printInfo } from "./utils";
+import { formatDate, printErr, printWarn, printInfo } from './utils';
 import notifier from 'node-notifier';
 import { exec } from 'child_process';
 import express from 'express';
@@ -17,7 +17,7 @@ interface IJson {
 }
 const MONITOR_ROOMS_SETTING_PATH = path.resolve(`${__dirname}/../monitor-rooms.json`);
 const TEST_INTERVAL = 5 * 1000;
-const NORMAL_INTERVAL = 10 * 1000;
+const NORMAL_INTERVAL = 15 * 1000;
 const INTERVAL = NORMAL_INTERVAL;
 
 class MonitorRoom extends Room {
@@ -39,16 +39,16 @@ async function addRoom(input: string, isAlert: boolean = true) {
   try {
     jsonDATA = JSON.parse(fs.readFileSync(MONITOR_ROOMS_SETTING_PATH, 'utf-8'));
   } catch (error: any) {
-    if (error.code === "ENOENT") {
-      printWarn("No config file");
+    if (error.code === 'ENOENT') {
+      printWarn('No config file');
       jsonDATA = {};
     } else {
-      printErr("Unknown error");
+      printErr('Unknown error');
       process.exit(0);
     }
   }
   if (jsonDATA.hasOwnProperty(id)) {
-    printErr("room already exists!");
+    printErr('room already exists!');
   } else {
     let newRoom = new MonitorRoom(id);
     try {
@@ -60,32 +60,35 @@ async function addRoom(input: string, isAlert: boolean = true) {
     let newMRoom: IMonitRoom = {
       id,
       isAlert: newRoom.isAlert,
-      uname: newRoom.uname
-    }
+      uname: newRoom.uname,
+    };
     jsonDATA[id] = newMRoom;
     fs.writeFileSync(MONITOR_ROOMS_SETTING_PATH, JSON.stringify(jsonDATA, null, 2), 'utf-8');
     printInfo(`add success: ${newMRoom.uname}`);
   }
-};
+}
 const alertLives = async (roomList: MonitorRoom[]) => {
   for (const room of roomList) {
-    room.isAlert && await alertLive(room);
+    room.isAlert && (await alertLive(room));
   }
 };
 const alertLive = (room: MonitorRoom) => {
   return new Promise((resolve) => {
-    notifier.notify({
-      title: `${room.uname} ls live!`,
-      message: room.title,
-      sound: true,
-      actions: ['watch', 'cancel']
-    }, (error, response) => {
-      if (error) console.error(error);
-      if (['timeout', 'activate', 'dismissed'].includes(response)) {
-        notifier.removeAllListeners();
-        resolve(null);
+    notifier.notify(
+      {
+        title: `${room.uname} ls live!`,
+        message: room.title,
+        sound: true,
+        actions: ['watch', 'cancel'],
+      },
+      (error, response) => {
+        if (error) console.error(error);
+        if (['timeout', 'activate', 'dismissed'].includes(response)) {
+          notifier.removeAllListeners();
+          resolve(null);
+        }
       }
-    });
+    );
     notifier.once('watch', () => {
       exec(`start https://live.bilibili.com/${room.id}`);
       notifier.removeAllListeners();
@@ -101,7 +104,8 @@ const list2html = (list: MonitorRoom[]) => {
   let html = fs.readFileSync(`${__dirname}/../templates/liveRooms.html`, 'utf-8');
   list.sort((r1, r2) => new Date(r2.live_time).getTime() - new Date(r1.live_time).getTime());
   let content = list.reduce((c, r) => {
-    return c +
+    return (
+      c +
       `<div class="room">\
       <a href='https://live.bilibili.com/${r.id}' target="_blank">\
       <div class="face"><img src="https://images.weserv.nl/?url=${r.uface}@60w_60h.webp"/></div>\
@@ -110,7 +114,8 @@ const list2html = (list: MonitorRoom[]) => {
       <div class="title">${r.title}</div>\
       <div class="online"><span></span><span>${r.online}</span></div>\
       <div class="time">started at: ${r.live_time}</div>\
-      </div></a></div>`;
+      </div></a></div>`
+    );
   }, '');
   let insertIndex = html.search('</main>') - 1;
   return html.slice(0, insertIndex) + content + html.slice(insertIndex);
@@ -120,10 +125,10 @@ async function monitor() {
   try {
     monitorList = JSON.parse(fs.readFileSync(MONITOR_ROOMS_SETTING_PATH, 'utf-8'));
   } catch (error: any) {
-    if (error.code === "ENOENT") {
-      console.error("No config file");
+    if (error.code === 'ENOENT') {
+      console.error('No config file');
     } else {
-      console.error("Unknown error");
+      console.error('Unknown error');
     }
     process.exit(0);
   }
@@ -158,7 +163,7 @@ async function monitor() {
   app.listen(1173);
   alertLives(liveRoomList);
   setInterval(() => {
-    roomList.forEach(async room => {
+    roomList.forEach(async (room) => {
       let oldStatus = room.live_status;
       await room.getInfo();
       if (room.live_status !== oldStatus) {
@@ -166,7 +171,7 @@ async function monitor() {
         if (room.live_status == 1) {
           console.log(`[${formatDate(new Date())}] ${room.uname} is live!`);
           liveRoomList.push(room);
-          room.isAlert && await alertLive(room);
+          room.isAlert && (await alertLive(room));
         } else if (oldStatus == 1) {
           console.log(`[${formatDate(new Date())}] ${room.uname} just stopped live!`);
           let i = liveRoomList.findIndex((e) => e.id === room.id);
@@ -174,19 +179,19 @@ async function monitor() {
           notifier.notify({
             title: `${room.uname} just stopped live!`,
             message: `，，，`,
-            sound: true
+            sound: true,
           });
         }
       }
     });
   }, INTERVAL);
-};
+}
 
-if (process.argv[2] == "-a") {
+if (process.argv[2] == '-a') {
   try {
     addRoom(process.argv[3]);
   } catch (error) {
-    printErr("add error!");
+    printErr('add error!');
   }
 } else {
   monitor();
