@@ -76,7 +76,7 @@ const alertLive = (room: MonitorRoom) => {
   return new Promise((resolve) => {
     notifier.notify(
       {
-        title: `${room.uname} ls live!`,
+        title: `${room.uname} is live!`,
         message: room.title,
         sound: true,
         actions: ['watch', 'cancel'],

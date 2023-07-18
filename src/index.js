@@ -87,10 +87,18 @@ Erii.bind({
         description: "input"
     }
 }, (ctx, options) => {
-    livePlay(ctx.getArgument().toString(), !options.nohls, options.quality);
+    livePlay(ctx.getArgument().toString(), options.flv ? "flv" : options.ts ? "ts" : "", options.quality, !!options["265"]);
 });
 Erii.addOption({
-    name: ["nohls", "nh"],
+    name: ["flv"],
+    command: "liveplay"
+});
+Erii.addOption({
+    name: ["ts"],
+    command: "liveplay"
+});
+Erii.addOption({
+    name: ["265"],
     command: "liveplay"
 });
 Erii.addOption({

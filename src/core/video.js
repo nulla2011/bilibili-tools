@@ -4,11 +4,10 @@ const utils = require('../utils');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
 const axios = require('axios');
-const { rejects } = require('assert');
 
 const VIEW_API = new URL("https://api.bilibili.com/x/web-interface/view");
 const PLAYURL_API = new URL("https://api.bilibili.com/x/player/playurl");
-const STST_API = new URL("https://api.bilibili.com/x/web-interface/archive/stat");
+const STAT_API = new URL("https://api.bilibili.com/x/web-interface/archive/stat");
 const INFO_API = new URL("https://api.bilibili.com/x/player/pagelist");
 
 const QUALITY_TEXT = {
@@ -178,8 +177,8 @@ class Page extends Video {
             switch (videoOn + audioOn) {
                 case 2:
                     //console.log("还没写，话说为什么要用这种方法下载呢？");  //这下不得不用 dash 了
-                    videoName = fileName.slice(0, -4) + "_video.mp4";
-                    audioName = fileName.slice(0, -4) + "_audio.m4s";
+                    videoName = utils.clearIllegalChars(fileName.slice(0, -4) + "_video.mp4");
+                    audioName = utils.clearIllegalChars(fileName.slice(0, -4) + "_audio.m4s");
                     dlTask = spawn("aria2c", ARIA2_ARGS.concat([url.v, '-d', path, '-o', videoName]));
                     dlTask2 = spawn("aria2c", ARIA2_ARGS.concat([url.a, '-d', path, '-o', audioName]));
                     break;
