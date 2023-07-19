@@ -2,7 +2,7 @@ const util = require('./utils');
 const { Room } = require('./core/live.js');
 const live = require('./core/live.js');
 
-const main = async (arg, format, quality, isHevc) => {
+const main = async (arg, { format, quality, isHevc }) => {
     let line;
     if (arg == undefined) {
         console.log("input link or room id:");
@@ -17,7 +17,7 @@ const main = async (arg, format, quality, isHevc) => {
         util.printErr(e);
         process.exit(1);
     }
-    let room = new Room({ roomID, isHevc });
+    let room = new Room(roomID);
     try {
         await room.getInfo();
     } catch (e) {
@@ -26,6 +26,7 @@ const main = async (arg, format, quality, isHevc) => {
     }
     util.printInfo(`标题：${room.title}\n人气：${room.online}\n开播时间：${room.live_time}\n分区：${room.parent_area_name} - ${room.area_name}`);
     if (format) room.format = format;
+    room.isHevc = !!isHevc;
     if (room.live_status != 1) {
         util.printErr("not streaming!");
         process.exit();
@@ -57,7 +58,11 @@ const main = async (arg, format, quality, isHevc) => {
 }
 
 if (require.main === module) {
-    main(process.argv[2]);
+    main(process.argv[2], {
+        format: process.argv[3],
+        quality: process.argv[4],
+        isHevc: process.argv[5] == '265' || process.argv[5] == 'hevc'
+    });
 } else {
     module.exports = { main }
 }

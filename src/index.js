@@ -87,7 +87,11 @@ Erii.bind({
         description: "input"
     }
 }, (ctx, options) => {
-    livePlay(ctx.getArgument().toString(), options.flv ? "flv" : options.ts ? "ts" : "", options.quality, !!options["265"]);
+    livePlay(ctx.getArgument().toString(), {
+        format: options.flv ? "flv" : options.ts ? "ts" : "",
+        quality: options.quality,
+        isHevc: !!options["265"]
+    });
 });
 Erii.addOption({
     name: ["flv"],

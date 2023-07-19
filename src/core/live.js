@@ -10,7 +10,7 @@ const USER_INFO_API = new URL("http://api.live.bilibili.com/live_user/v1/Master/
 
 let getRoomID = (input) => {
     let m = input.match(/^\d+$/);
-    let RoomID = m ? m[0] : input.match(/live\.bilibili\.com\/(\d+)/)[1];
+    let RoomID = m ? input : input.match(/live\.bilibili\.com\/(\d+)/)[1];
     if (!RoomID) {
         throw "input illegal";
     }
@@ -26,10 +26,10 @@ const concatUrl = (codec) => {
     return item.host + codec[0].base_url + item.extra
 }
 class Room {
-    constructor({ roomID, isHevc }) {
-        this.id = roomID;
+    constructor(ID) {
+        this.id = ID;
         this.format = config.liveFormat;
-        this.isHevc = isHevc;
+        this.isHevc = false;
     }
     fillPlayAPIUrl(quality) {
         let query = {
@@ -47,7 +47,7 @@ class Room {
             room_id: this.id,
             format: formatMap[this.format],
             protocol: "0,1",
-            codec: this.isHevc ? 1 : 0,   //0 为 avc 1 为 hevc
+            codec: this.isHevc ? 1 : 0,
             qn: quality,
             platform: "web",
             ptype: 8,
@@ -62,11 +62,13 @@ class Room {
     }
     async sendRequset2PlayAPI(quality) {
         let rurl = this.fillPlayAPIUrlV2(quality);
-        let response = await axios.get(rurl.href);
-        if (response.data.code !== 0) {
-            throw "code:" + response.data.code + " message:" + response.data.message;
+        let response = await axios.get(rurl.href).then((r) => r.data).catch((error) => {
+            util.handleAxiosErr(error);
+        });
+        if (response.code !== 0) {
+            throw "code:" + response.code + " message:" + response.message;
         }
-        return response.data;
+        return response;
     }
     async getQualities() {
         let response = await this.sendRequset2PlayAPI(0);
@@ -124,15 +126,14 @@ class Room {
             params: {
                 uid: this.uid
             }
-        }).catch((error) => {
+        }).then((r) => r.data).catch((error) => {
             util.handleAxiosErr(error);
         });
-        let rdata = response.data;
-        if (rdata.code !== 0) {
-            throw "code:" + rdata.code + " message:" + rdata.message;
+        if (response.code !== 0) {
+            throw "code:" + response.code + " message:" + response.message;
         }
-        this.uname = rdata.data.info.uname;
-        this.uface = rdata.data.info.face;
+        this.uname = response.data.info.uname;
+        this.uface = response.data.info.face;
     }
 }
 
