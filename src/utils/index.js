@@ -92,7 +92,7 @@ const formatTime = (date) => {
 const escape = (string) => {
     return string.replace(/(["'$`\\])/g, '\\$1');
 }
-const clearIllegalChars = (string) => {
+const replaceIllegalChars = (string) => {
     return string.replace(/[\\/:*?"<>|]/g, '_').replace(/!!/g, '__');
 }
 const handleAxiosErr = (error) => {
@@ -160,7 +160,7 @@ module.exports = {
     printInfo,
     formatDate,
     formatTime,
-    clearIllegalChars,
+    replaceIllegalChars,
     handleAxiosErr,
     showExtension,
 }

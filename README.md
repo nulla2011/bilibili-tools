@@ -10,7 +10,7 @@ npm install
 
 * aria2
 * mpv
-* ffmpeg （可选）
+* ffmpeg （用于合并下载的音视频）
 
 ## 用法
 

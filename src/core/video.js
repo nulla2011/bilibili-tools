@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { readlineSync, session, config, handleAxiosErr, showExtension } = require('../utils');
+const { readlineSync, session, config, handleAxiosErr, showExtension, replaceIllegalChars } = require('../utils');
 const utils = require('../utils');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
@@ -177,22 +177,21 @@ class Page extends Video {
             switch (videoOn + audioOn) {
                 case 2:
                     //console.log("还没写，话说为什么要用这种方法下载呢？");  //这下不得不用 dash 了
-                    videoName = utils.clearIllegalChars(fileName.slice(0, -4) + "_video.mp4");
-                    audioName = utils.clearIllegalChars(fileName.slice(0, -4) + "_audio.m4s");
+                    videoName = replaceIllegalChars(fileName.slice(0, -4) + "_video.mp4");
+                    audioName = replaceIllegalChars(fileName.slice(0, -4) + "_audio.m4s");
                     dlTask = spawn("aria2c", ARIA2_ARGS.concat([url.v, '-d', path, '-o', videoName]));
                     dlTask2 = spawn("aria2c", ARIA2_ARGS.concat([url.a, '-d', path, '-o', audioName]));
                     break;
                 case 1:
-                    fileName = fileName.slice(0, -4) + `_${videoOn == 1 ? "video.mp4" : (audioOn == 1 ? "audio.m4s" : null)}`;
+                    fileName = replaceIllegalChars(fileName.slice(0, -4)) + `_${videoOn == 1 ? "video.mp4" : (audioOn == 1 ? "audio.m4s" : null)}`;
                     dlTask = spawn("aria2c", ARIA2_ARGS.concat([url[videoOn == 1 ? "v" : (audioOn == 1 ? "a" : null)], '-d', path, '-o', fileName]));
                     break;
                 default:
                     utils.printErr("video and audio are all off!");
                     process.exit();
-                    break;
             }
         } else {
-            dlTask = spawn("aria2c", ARIA2_ARGS.concat([url.v, '-d', path, '-o', utils.clearIllegalChars(fileName)]));      //不管是windows还是unix都有不允许当文件名的字符
+            dlTask = spawn("aria2c", ARIA2_ARGS.concat([url.v, '-d', path, '-o', replaceIllegalChars(fileName)]));      //不管是windows还是unix都有不允许当文件名的字符
         }
         let task1 = new Promise((resolve, reject) => {
             dlTask.on("close", (code) => {
@@ -238,7 +237,7 @@ class Page extends Video {
                 });
             } else if (audioOn && videoOn) {
                 console.log("transcoding...");
-                exec(`ffmpeg -i "${path + "/" + videoName}" -i "${path + "/" + audioName}" -c:v copy -c:a copy "${path + "/" + fileName.slice(0, -4) + ".mp4"}"`, (err, stdout, stderr) => {
+                exec(`ffmpeg -i "${path + "/" + videoName}" -i "${path + "/" + audioName}" -c:v copy -c:a copy "${path + "/" + replaceIllegalChars(fileName.slice(0, -4)) + ".mp4"}"`, (err, stdout, stderr) => {
                     if (err) {
                         utils.printErr(err);
                     } else {
