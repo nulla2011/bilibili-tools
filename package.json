@@ -25,6 +25,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "dev": "tsc -w",
     "test": "node ./dist/index.js"
   },
   "bin": {

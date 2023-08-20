@@ -1,36 +1,42 @@
 import WebSocket from 'ws';
 import decompress from 'Brotli/decompress';
 import { Room, getRoomID } from './core/live';
-import { formatTime, formatDate, printErr } from './utils';
+import { formatTime, formatDate, printErr, session, uid } from './utils';
 import axios from 'axios';
 import assert from 'node:assert';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const DANMAKU_INFO = new URL('https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo');
-const wsURL = new URL('wss://dsa-cn-live-comet-01.chat.bilibili.com:2245/sub'); //用别的 URL 会连不上？
+// const wsURL = new URL('wss://tx-gz-live-comet-04.chat.bilibili.com/sub'); //用别的 URL 会连不上？
 const LOG_PATH =
   process.platform === 'win32' ? process.env.USERPROFILE + '/Documents/btools/' : '~/.btools/';
 
-const getWsURL = async (id) => {
+const getWs = async (id): Promise<[URL, string]> => {
   DANMAKU_INFO.searchParams.set('type', '0');
   DANMAKU_INFO.searchParams.set('id', id);
-  let data = await axios.get(DANMAKU_INFO.href).then((response) => response.data);
+  let data = await axios
+    .get(DANMAKU_INFO.href, {
+      headers: {
+        cookie: `SESSDATA=${session};`,
+      },
+    })
+    .then((response) => response.data);
   if (data.code != 0) {
     throw new Error(`error code: ${data.code}, message: ${data.message}`);
   } else {
     let wsURL = new URL(
       'wss://' + data.data.host_list[0].host + ':' + data.data.host_list[0].wss_port + '/sub'
     );
-    return wsURL;
+    return [wsURL, data.data.token];
   }
 };
-interface Iconfig {
+interface IConfig {
   showR?: boolean;
 }
-const wsService = (roomid: number, config?: Iconfig) => {
+const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) => {
   let timer: NodeJS.Timer;
-  let ws = new WebSocket(wsURL);
+  let ws = new WebSocket(URL);
   let log_file = fs.createWriteStream(
     path.resolve(LOG_PATH, `${formatDate(new Date()).slice(2, 10)}-live-${roomid}.log`),
     {
@@ -56,12 +62,12 @@ const wsService = (roomid: number, config?: Iconfig) => {
   ws.onopen = (e) => {
     console.log('opened');
     let verify = {
-      uid: 0,
-      roomid: roomid,
+      uid,
+      roomid,
       protover: 3,
       platform: 'web',
       type: 2,
-      key: '',
+      key: token,
     };
     ws.send(setVerifyData(JSON.stringify(verify)));
     timer = setInterval(() => {
@@ -86,7 +92,7 @@ const wsService = (roomid: number, config?: Iconfig) => {
   };
   const handleMessage = (buf: Buffer) => {
     let offset = 0;
-    interface Iresult {
+    interface IResult {
       len: number;
       headLen: number;
       ver: number;
@@ -94,7 +100,7 @@ const wsService = (roomid: number, config?: Iconfig) => {
       num: number;
       body: string;
     }
-    let result: Iresult[] = [];
+    let result: IResult[] = [];
     let decoder = new TextDecoder();
     while (offset < buf.length) {
       let packetLen = buf.readUint32BE(offset + 0);
@@ -189,19 +195,16 @@ const wsService = (roomid: number, config?: Iconfig) => {
   };
 };
 
-export const main = async (input: string, config?: Iconfig) => {
+export const main = async (input: string, config?: IConfig) => {
   let ID = getRoomID(input);
   let room = new Room(ID);
-  // let wsURL: URL;
-  // try {
-  //   wsURL = await getWsURL(ID);
-  // } catch (error) {
-  //   printErr(error);
-  //   process.exit(1);
-  // }
-  // console.log(wsURL.href);
+  let [wsURL, token] = await getWs(ID).catch((e) => {
+    printErr(e);
+    process.exit(1);
+  });
+  console.log(wsURL.href);
   await room.getInfo();
-  wsService(room.room_id, config);
+  wsService(room.room_id, wsURL, token, config);
 };
 
 if (require.main === module) {
