@@ -1,4 +1,4 @@
-const { config } = require('../utils');
+const { session, config } = require('../utils');
 const util = require('../utils');
 const exec = require('child_process').exec;
 const axios = require('axios');
@@ -62,7 +62,12 @@ class Room {
     }
     async sendRequset2PlayAPI(quality) {
         let rurl = this.fillPlayAPIUrlV2(quality);
-        let response = await axios.get(rurl.href).then((r) => r.data).catch((error) => {
+        let response = await axios.get(rurl.href,{
+            headers: {
+                'referer': 'https://live.bilibili.com/',
+                'cookie': `SESSDATA=${session};`
+            }
+        }).then((r) => r.data).catch((error) => {
             util.handleAxiosErr(error);
         });
         if (response.code !== 0) {
@@ -115,6 +120,8 @@ class Room {
         exec(cmdString, { maxBuffer: 1024 * 500 }, (err, stdout, stderr) => {
             if (err) {
                 util.printErr(err);
+            } else if (stderr) {
+                util.printErr(stderr);
             } else {
                 console.log(stdout);
             }
