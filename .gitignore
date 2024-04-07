@@ -7,3 +7,4 @@ monitor-rooms.json
 bangumi_stats
 .vscode
 dist
+*.old

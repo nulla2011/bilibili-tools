@@ -9,6 +9,7 @@ const VIEW_API = new URL("https://api.bilibili.com/x/web-interface/view");
 const PLAYURL_API = new URL("https://api.bilibili.com/x/player/playurl");
 const STAT_API = new URL("https://api.bilibili.com/x/web-interface/archive/stat");
 const INFO_API = new URL("https://api.bilibili.com/x/player/pagelist");
+const DANMAKU_API = new URL("https://api.bilibili.com/x/v1/dm/list.so");
 
 const QUALITY_TEXT = {
     120: "4K",
@@ -248,6 +249,15 @@ class Page extends Video {
                 });
             }
         });
+    }
+    async downloadDanmaku(path, xml = true) {
+        DANMAKU_API.searchParams.set("oid", this.cid);
+        axios.get(DANMAKU_API.href, {
+            headers: {
+                'referer': 'https://www.bilibili.com/',
+                'cookie': `SESSDATA=${session};`
+            }
+        }).then(res => fs.writeFileSync(path + "/" + this.title + ".xml", res.data))
     }
 }
 

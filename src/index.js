@@ -4,6 +4,7 @@ const play = require('./play.js').main;
 const livePlay = require('./livePlay.js').main;
 const liveDanmaku = require('./live-danmaku.js').main;
 const abv = require('./abv.js');
+const downloadDanmaku = require('./download-danmaku.js').main;
 
 Erii.setMetaInfo({
     version: "0.3.0",
@@ -147,6 +148,16 @@ Erii.bind({
 }, (ctx, options) => {
     liveDanmaku(ctx.getArgument().toString(), { showR: options.showR });
 });
+Erii.bind({
+    name: ["dldm"],
+    description: "download danmaku (xml)",
+    argument: {
+        name: "input",
+        description: "input"
+    }
+}, (ctx) => {
+    downloadDanmaku(ctx.getArgument().toString());
+})
 Erii.addOption({
     name: ["showrq", "rq"],
     command: "livedm",
