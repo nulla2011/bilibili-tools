@@ -150,7 +150,7 @@ Erii.bind({
     liveDanmaku(ctx.getArgument().toString(), { showR: options.showR });
 });
 Erii.bind({
-    name: ["dldm"],
+    name: ["dldm", "ddm"],
     description: "download danmaku (xml)",
     argument: {
         name: "input",

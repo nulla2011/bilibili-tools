@@ -229,23 +229,23 @@ class Page extends Video {
         await Promise.all([task1, task2]).then(() => {
             if (audioOn && !videoOn) {
                 console.log("transcoding...");
-                exec(`ffmpeg -i "${path + "/" + fileName}" -c:a copy "${path + "/" + fileName.slice(0, -4) + "_audio.m4a"}"`, (err, stdout, stderr) => {
+                exec(`ffmpeg -i "${join(path, fileName)}" -c:a copy "${join(path, fileName.slice(0, -4) + "_audio.m4a")}"`, (err, stdout, stderr) => {
                     if (err) {
                         utils.printErr(err);
                     } else {
                         console.log(stdout);
-                        fs.unlinkSync(`${path}/${fileName}`);
+                        fs.unlinkSync(join(path, fileName));
                     }
                 });
             } else if (audioOn && videoOn) {
                 console.log("transcoding...");
-                exec(`ffmpeg -i "${path + "/" + videoName}" -i "${path + "/" + audioName}" -c:v copy -c:a copy "${path + "/" + replaceIllegalChars(fileName.slice(0, -4)) + ".mp4"}"`, (err, stdout, stderr) => {
+                exec(`ffmpeg -i "${join(path, videoName)}" -i "${join(path, audioName)}" -c:v copy -c:a copy "${join(path, replaceIllegalChars(fileName.slice(0, -4)) + ".mp4")}"`, (err, stdout, stderr) => {
                     if (err) {
                         utils.printErr(err);
                     } else {
                         console.log(stdout);
-                        fs.unlinkSync(`${path}/${videoName}`);
-                        fs.unlinkSync(`${path}/${audioName}`);
+                        fs.unlinkSync(join(path, videoName));
+                        fs.unlinkSync(join(path, audioName));
                     }
                 });
             }
