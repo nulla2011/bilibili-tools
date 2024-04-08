@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { join } = require('path');
 const { readlineSync, session, config, handleAxiosErr, showExtension, replaceIllegalChars } = require('../utils');
 const utils = require('../utils');
 const exec = require('child_process').exec;
@@ -252,12 +253,16 @@ class Page extends Video {
     }
     async downloadDanmaku(path, xml = true) {
         DANMAKU_API.searchParams.set("oid", this.cid);
+        let fileName = `${this.title}_${this.aid}.xml`;
+        if (this.videos > 1) {
+            fileName = fileName.slice(0, -4) + `_p${this.page}_${this.part}.xml`;
+        }
         axios.get(DANMAKU_API.href, {
             headers: {
                 'referer': 'https://www.bilibili.com/',
                 'cookie': `SESSDATA=${session};`
             }
-        }).then(res => fs.writeFileSync(path + "/" + this.title + ".xml", res.data))
+        }).then(res => fs.writeFileSync(join(path, replaceIllegalChars(fileName)), res.data));
     }
 }
 

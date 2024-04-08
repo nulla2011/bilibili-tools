@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const Erii = require('erii').default;
 const download = require('./download.js').main;
 const play = require('./play.js').main;
