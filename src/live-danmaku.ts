@@ -18,7 +18,7 @@ const getWs = async (id): Promise<[URL, string]> => {
   let data = await axios
     .get(DANMAKU_INFO.href, {
       headers: {
-        cookie: `SESSDATA=${session};`,
+        Cookie: `SESSDATA=${session};`,
       },
     })
     .then((response) => response.data);
@@ -62,7 +62,7 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
   ws.onopen = (e) => {
     console.log('opened');
     let verify = {
-      uid,
+      uid: parseInt(uid),
       roomid,
       protover: 3,
       platform: 'web',
@@ -202,7 +202,7 @@ export const main = async (input: string, config?: IConfig) => {
     printErr(e);
     process.exit(1);
   });
-  console.log(wsURL.href);
+  // console.log(wsURL.href);
   await room.getInfo();
   wsService(room.room_id, wsURL, token, config);
 };
