@@ -45,10 +45,10 @@ let getVideoInfo = async (input) => {
     }
     let parameters = mbvid ? ["bvid", mbvid[0]] : maid ? ["aid", maid[1]] : null;
     VIEW_API.searchParams.set(...parameters);
-    let response = await axios.get(VIEW_API.href,{
+    let response = await axios.get(VIEW_API.href, {
         headers: {
-          referer: 'https://www.bilibili.com/',
-          cookie: `SESSDATA=${session};`,
+            referer: 'https://www.bilibili.com/',
+            cookie: `SESSDATA=${session};`,
         },
     }).then(response => response.data).catch(err => handleAxiosErr(err));
     if (response.code !== 0) {
@@ -186,8 +186,8 @@ class Page extends Video {
                     //console.log("还没写，话说为什么要用这种方法下载呢？");  //这下不得不用 dash 了
                     videoName = replaceIllegalChars(fileName.slice(0, -4) + "_video.mp4");
                     audioName = replaceIllegalChars(fileName.slice(0, -4) + "_audio.m4s");
-                    dlTask = spawn("aria2c", ARIA2_ARGS.concat([url.v, '-d', path, '-o', videoName]));
-                    dlTask2 = spawn("aria2c", ARIA2_ARGS.concat([url.a, '-d', path, '-o', audioName]));
+                    dlTask = spawn("aria2c", ARIA2_ARGS.concat([url.v, '-d', config.cachePath, '-o', videoName]));
+                    dlTask2 = spawn("aria2c", ARIA2_ARGS.concat([url.a, '-d', config.cachePath, '-o', audioName]));
                     break;
                 case 1:
                     fileName = replaceIllegalChars(fileName.slice(0, -4)) + `_${videoOn == 1 ? "video.mp4" : (audioOn == 1 ? "audio.m4s" : null)}`;
@@ -244,13 +244,13 @@ class Page extends Video {
                 });
             } else if (audioOn && videoOn) {
                 console.log("transcoding...");
-                exec(`ffmpeg -i "${join(path, videoName)}" -i "${join(path, audioName)}" -c:v copy -c:a copy "${join(path, replaceIllegalChars(fileName.slice(0, -4)) + ".mp4")}"`, (err, stdout, stderr) => {
+                exec(`ffmpeg -i "${join(config.cachePath, videoName)}" -i "${join(config.cachePath, audioName)}" -c:v copy -c:a copy "${join(path, replaceIllegalChars(fileName.slice(0, -4)) + ".mp4")}"`, (err, stdout, stderr) => {
                     if (err) {
                         utils.printErr(err);
                     } else {
                         console.log(stdout);
-                        fs.unlinkSync(join(path, videoName));
-                        fs.unlinkSync(join(path, audioName));
+                        fs.unlinkSync(join(config.cachePath, videoName));
+                        fs.unlinkSync(join(config.cachePath, audioName));
                     }
                 });
             }
