@@ -45,7 +45,12 @@ let getVideoInfo = async (input) => {
     }
     let parameters = mbvid ? ["bvid", mbvid[0]] : maid ? ["aid", maid[1]] : null;
     VIEW_API.searchParams.set(...parameters);
-    let response = await axios.get(VIEW_API.href).then(response => response.data).catch(err => handleAxiosErr(err));
+    let response = await axios.get(VIEW_API.href,{
+        headers: {
+          referer: 'https://www.bilibili.com/',
+          cookie: `SESSDATA=${session};`,
+        },
+    }).then(response => response.data).catch(err => handleAxiosErr(err));
     if (response.code !== 0) {
         throw "code:" + response.code + " message:" + response.message;
     }
