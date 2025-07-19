@@ -131,6 +131,10 @@ class Page extends Video {
         }
         if (this.isDASH) {
             let vQualityMatch = response.data.dash.video.filter(element => element.id == quality);
+            if (vQualityMatch.length === 0) {
+                utils.printErr("Cookie may be invalid");
+                process.exit();
+            }
             let vUrl = vQualityMatch.find(el => el.codecs.startsWith(this.isHevc ? 'hev' : 'avc')).baseUrl;
             let audioBestQuality = response.data.dash.audio.reduce((max, cur) => (cur.id > max.id) ? cur : max);
             utils.printInfo(`audio quality: ${audioBestQuality.id}`);
