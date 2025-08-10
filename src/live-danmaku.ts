@@ -1,7 +1,8 @@
 import WebSocket from 'ws';
 import decompress from 'Brotli/decompress';
-import { Room, getRoomID } from './core/live';
-import { formatTime, formatDate, printErr, session, uid } from './utils';
+import {Room, getRoomID} from './core/live';
+import wbi from './core/wbi';
+import {formatTime, formatDate, printErr, session, uid} from './utils';
 import axios from 'axios';
 import assert from 'node:assert';
 import * as fs from 'fs';
@@ -13,8 +14,11 @@ const LOG_PATH =
   process.platform === 'win32' ? process.env.USERPROFILE + '/Documents/btools/' : '~/.btools/';
 
 const getWs = async (id): Promise<[URL, string]> => {
-  DANMAKU_INFO.searchParams.set('type', '0');
-  DANMAKU_INFO.searchParams.set('id', id);
+  let params = new URLSearchParams();
+  params.append('type', '0');
+  params.append('id', id);
+  params = await wbi(params)
+  DANMAKU_INFO.search = '?' + params.toString()
   let data = await axios
     .get(DANMAKU_INFO.href, {
       headers: {
@@ -31,9 +35,11 @@ const getWs = async (id): Promise<[URL, string]> => {
     return [wsURL, data.data.token];
   }
 };
+
 interface IConfig {
   showR?: boolean;
 }
+
 const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) => {
   let timer: NodeJS.Timer;
   let ws = new WebSocket(URL);
@@ -92,6 +98,7 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
   };
   const handleMessage = (buf: Buffer) => {
     let offset = 0;
+
     interface IResult {
       len: number;
       headLen: number;
@@ -100,6 +107,7 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
       num: number;
       body: string;
     }
+
     let result: IResult[] = [];
     let decoder = new TextDecoder();
     while (offset < buf.length) {

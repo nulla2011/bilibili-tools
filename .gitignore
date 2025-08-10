@@ -6,5 +6,6 @@ cache
 monitor-rooms.json
 bangumi_stats
 .vscode
+.idea
 dist
 *.old

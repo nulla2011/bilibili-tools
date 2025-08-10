@@ -1,7 +1,7 @@
 const http = require('http');
 const readline = require('readline');
 const fs = require('fs');
-let config = require('../../config.json');
+const config = require('../../config.json');
 let chalk;
 try {
   chalk = require('chalk');
@@ -161,15 +161,17 @@ const showExtension = (url) => {
 //         printErr("Unknown error");
 //     }
 // }
-let session = config.SESSDATA;
-let uid = config.uid;
+const session = config.SESSDATA;
+const uid = config.uid;
 // let bili_jct = config.bili_jct;
+const UA ='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36'
 
 module.exports = {
   config,
   session,
   uid,
   // bili_jct,
+  UA,
   readlineSync,
   httpGet,
   printErr,
