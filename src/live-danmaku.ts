@@ -1,5 +1,6 @@
 import WebSocket from 'ws';
 import decompress from 'Brotli/decompress';
+import protobuf from "protobufjs";
 import {Room, getRoomID} from './core/live';
 import wbi from './core/wbi';
 import {formatTime, formatDate, printErr, session, uid} from './utils';
@@ -169,7 +170,6 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
         console.log('Verify success');
       } else {
         let data = JSON.parse(r.body);
-        // console.log(data);
         if (data.cmd == 'DANMU_MSG') {
           let time = new Date(data.info[9].ts * 1000);
           console.log(`[${formatTime(time)}] ${data.info[2][1]}: ${data.info[1]}`);
@@ -177,12 +177,36 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
         }
         if (data.cmd == 'INTERACT_WORD') {
           let time = new Date(data.data.timestamp * 1000);
+          if (data.data.msg_type == 1){
+            console.log(`[${formatTime(time)}] ${data.data.uname} 进入直播间`);
+            log_file.write(`[${formatTime(time)}] ${data.data.uname} 进入直播间\n`);
+          }
           if (data.data.msg_type == 2) {
             console.log(`[${formatTime(time)}] ${data.data.uname} 关注了直播间`);
             log_file.write(`[${formatTime(time)}] ${data.data.uname} 关注了直播间\n`);
-          } else {
-            console.log(`[${formatTime(time)}] ${data.data.uname} 进入直播间`);
-            log_file.write(`[${formatTime(time)}] ${data.data.uname} 进入直播间\n`);
+          }
+          if (data.data.msg_type == 3){
+            console.log(`[${formatTime(time)}] ${data.data.uname} 分享了直播间`);
+            log_file.write(`[${formatTime(time)}] ${data.data.uname} 分享了直播间\n`);
+          }
+        }
+        if (data.cmd == 'INTERACT_WORD_V2') {
+          const buffer = Buffer.from(data.data.pb, 'base64');
+          const root = protobuf.loadSync(path.join(__dirname, '../resource/INTERACT_WORD_V2.proto'))
+          const Message = root.lookupType('InteractWordV2')
+          const message = Message.decode(buffer).toJSON();
+          const time = new Date(message.timestamp * 1000);
+          if (message.msgType == 1){
+            console.log(`[${formatTime(time)}] ${message.uname} 进入直播间`);
+            log_file.write(`[${formatTime(time)}] ${message.uname} 进入直播间\n`);
+          }
+          if (message.msgType == 2) {
+            console.log(`[${formatTime(time)}] ${message.uname} 关注了直播间`);
+            log_file.write(`[${formatTime(time)}] ${message.uname} 关注了直播间\n`);
+          }
+          if (message.msgType == 3){
+            console.log(`[${formatTime(time)}] ${message.uname} 分享了直播间`);
+            log_file.write(`[${formatTime(time)}] ${message.uname} 分享了直播间\n`);
           }
         }
         if (data.cmd == 'SEND_GIFT') {

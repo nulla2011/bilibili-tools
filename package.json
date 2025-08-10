@@ -12,6 +12,7 @@
     "md5": "^2.3.0",
     "node-notifier": "^10.0.1",
     "node-schedule": "^2.1.1",
+    "protobufjs": "^7.5.3",
     "ws": "^8.13.0"
   },
   "devDependencies": {
