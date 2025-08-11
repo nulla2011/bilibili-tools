@@ -155,6 +155,8 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
       }
       offset += packetLen;
     }
+    const root = protobuf.loadSync(path.join(__dirname, '../resource/INTERACT_WORD_V2.proto'))
+    const Message = root.lookupType('InteractWordV2')
     result.forEach((r) => {
       if (r.type == 3) {
         if (config?.showR) {
@@ -192,8 +194,6 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
         }
         if (data.cmd == 'INTERACT_WORD_V2') {
           const buffer = Buffer.from(data.data.pb, 'base64');
-          const root = protobuf.loadSync(path.join(__dirname, '../resource/INTERACT_WORD_V2.proto'))
-          const Message = root.lookupType('InteractWordV2')
           const message = Message.decode(buffer).toJSON();
           const time = new Date(message.timestamp * 1000);
           if (message.msgType == 1){
