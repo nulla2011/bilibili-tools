@@ -95,9 +95,9 @@ const formatDate = (date) => {
     .getDate()
     .toString()
     .padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date
-    .getMinutes()
-    .toString()
-    .padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+      .getMinutes()
+      .toString()
+      .padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
 };
 const formatTime = (date) => {
   return `${date.getHours().toString().padStart(2, '0')}:${date
@@ -122,7 +122,8 @@ const handleAxiosErr = (error) => {
   //     printErr(error);
   // }
   // printErr(`[${formatDate(new Date())}] ${error}`);
-  throw `[${formatDate(new Date())}] ${error} at ${error.request._currentUrl}`;
+  printErr(`[${formatDate(new Date())}] ${error} at ${error.config.url}\n${JSON.stringify(error.response.data)}`);
+  process.exit(1);
 };
 const showExtension = (url) => {
   return url.match(/(?<=\/[^/.]+\.)\w+(?=\?)/)[0];
@@ -164,7 +165,7 @@ const showExtension = (url) => {
 const session = config.SESSDATA;
 const uid = config.uid;
 // let bili_jct = config.bili_jct;
-const UA ='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36'
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36'
 
 module.exports = {
   config,

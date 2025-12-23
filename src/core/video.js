@@ -7,7 +7,7 @@ const spawn = require('child_process').spawn;
 const axios = require('axios');
 
 const VIEW_API = new URL("https://api.bilibili.com/x/web-interface/view");
-const PLAYURL_API = new URL("https://api.bilibili.com/x/player/playurl");
+const PLAYURL_API = new URL("https://api.bilibili.com/x/player/wbi/playurl");
 const STAT_API = new URL("https://api.bilibili.com/x/web-interface/archive/stat");
 const INFO_API = new URL("https://api.bilibili.com/x/player/pagelist");
 const DANMAKU_API = new URL("https://api.bilibili.com/x/v1/dm/list.so");
@@ -107,7 +107,6 @@ class Page extends Video {
     }
     async getPlayurl() {
         let rurl = this.fillPlayAPIUrl();
-        // console.log(session);
         let response = await axios.get(rurl.href, {
             headers: {
                 'referer': 'https://www.bilibili.com/',

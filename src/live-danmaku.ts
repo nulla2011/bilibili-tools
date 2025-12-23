@@ -1,9 +1,9 @@
 import WebSocket from 'ws';
 import decompress from 'Brotli/decompress';
-import protobuf from "protobufjs";
-import {Room, getRoomID} from './core/live';
+import protobuf from 'protobufjs';
+import { Room, getRoomID } from './core/live';
 import wbi from './core/wbi';
-import {formatTime, formatDate, printErr, session, uid} from './utils';
+import { formatTime, formatDate, printErr, session, uid } from './utils';
 import axios from 'axios';
 import assert from 'node:assert';
 import * as fs from 'fs';
@@ -18,8 +18,8 @@ const getWs = async (id): Promise<[URL, string]> => {
   let params = new URLSearchParams();
   params.append('type', '0');
   params.append('id', id);
-  params = await wbi(params)
-  DANMAKU_INFO.search = '?' + params.toString()
+  params = await wbi(params);
+  DANMAKU_INFO.search = '?' + params.toString();
   let data = await axios
     .get(DANMAKU_INFO.href, {
       headers: {
@@ -51,6 +51,10 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
       encoding: 'utf8',
     }
   );
+  const lognWrite = (text: string) => {
+    console.log(text);
+    log_file.write(text + '\n');
+  };
   let setVerifyData = (string: string) => {
     const encoder = new TextEncoder();
     let stringBuffer = encoder.encode(string);
@@ -155,8 +159,8 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
       }
       offset += packetLen;
     }
-    const root = protobuf.loadSync(path.join(__dirname, '../resource/INTERACT_WORD_V2.proto'))
-    const Message = root.lookupType('InteractWordV2')
+    const root = protobuf.loadSync(path.join(__dirname, '../resource/INTERACT_WORD_V2.proto'));
+    const Message = root.lookupType('InteractWordV2');
     result.forEach((r) => {
       if (r.type == 3) {
         if (config?.showR) {
@@ -174,52 +178,40 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
         let data = JSON.parse(r.body);
         if (data.cmd == 'DANMU_MSG') {
           let time = new Date(data.info[9].ts * 1000);
-          console.log(`[${formatTime(time)}] ${data.info[2][1]}: ${data.info[1]}`);
-          log_file.write(`[${formatTime(time)}] ${data.info[2][1]}: ${data.info[1]}\n`);
+          lognWrite(`[${formatTime(time)}] ${data.info[2][1]}: ${data.info[1]}`);
         }
         if (data.cmd == 'INTERACT_WORD') {
           let time = new Date(data.data.timestamp * 1000);
-          if (data.data.msg_type == 1){
-            console.log(`[${formatTime(time)}] ${data.data.uname} 进入直播间`);
-            log_file.write(`[${formatTime(time)}] ${data.data.uname} 进入直播间\n`);
+          if (data.data.msg_type == 1) {
+            lognWrite(`[${formatTime(time)}] ${data.data.uname} 进入直播间`);
           }
           if (data.data.msg_type == 2) {
-            console.log(`[${formatTime(time)}] ${data.data.uname} 关注了直播间`);
-            log_file.write(`[${formatTime(time)}] ${data.data.uname} 关注了直播间\n`);
+            lognWrite(`[${formatTime(time)}] ${data.data.uname} 关注了直播间`);
           }
-          if (data.data.msg_type == 3){
-            console.log(`[${formatTime(time)}] ${data.data.uname} 分享了直播间`);
-            log_file.write(`[${formatTime(time)}] ${data.data.uname} 分享了直播间\n`);
+          if (data.data.msg_type == 3) {
+            lognWrite(`[${formatTime(time)}] ${data.data.uname} 分享了直播间`);
           }
         }
         if (data.cmd == 'INTERACT_WORD_V2') {
           const buffer = Buffer.from(data.data.pb, 'base64');
           const message = Message.decode(buffer).toJSON();
           const time = new Date(message.timestamp * 1000);
-          if (message.msgType == 1){
-            console.log(`[${formatTime(time)}] ${message.uname} 进入直播间`);
-            log_file.write(`[${formatTime(time)}] ${message.uname} 进入直播间\n`);
+          if (message.msgType == 1) {
+            lognWrite(`[${formatTime(time)}] ${message.uname} 进入直播间`);
           }
           if (message.msgType == 2) {
-            console.log(`[${formatTime(time)}] ${message.uname} 关注了直播间`);
-            log_file.write(`[${formatTime(time)}] ${message.uname} 关注了直播间\n`);
+            lognWrite(`[${formatTime(time)}] ${message.uname} 关注了直播间`);
           }
-          if (message.msgType == 3){
-            console.log(`[${formatTime(time)}] ${message.uname} 分享了直播间`);
-            log_file.write(`[${formatTime(time)}] ${message.uname} 分享了直播间\n`);
+          if (message.msgType == 3) {
+            lognWrite(`[${formatTime(time)}] ${message.uname} 分享了直播间`);
           }
         }
         if (data.cmd == 'SEND_GIFT') {
           let time = new Date(data.data.timestamp * 1000);
-          console.log(
+          lognWrite(
             `[${formatTime(time)}] ${data.data.uname} ${data.data.action} ${data.data.giftName} x ${
               data.data.num
             }`
-          );
-          log_file.write(
-            `[${formatTime(time)}] ${data.data.uname} ${data.data.action} ${data.data.giftName} x ${
-              data.data.num
-            }\n`
           );
         }
       }
