@@ -5,6 +5,7 @@ const utils = require('../utils');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
 const axios = require('axios');
+const { default: wbi } = require('./wbi');
 
 const VIEW_API = new URL("https://api.bilibili.com/x/web-interface/view");
 const PLAYURL_API = new URL("https://api.bilibili.com/x/player/wbi/playurl");
@@ -90,7 +91,8 @@ class Page extends Video {
     enableHevc() {
         this.isHevc = true;
     }
-    fillPlayAPIUrl() {
+    async fillPlayAPIUrl() {
+        let params = new URLSearchParams();
         let query = {
             avid: this.aid,
             cid: this.cid,
@@ -101,16 +103,18 @@ class Page extends Video {
             otype: "json"
         }
         for (const k in query) {
-            PLAYURL_API.searchParams.set(k, query[k]);
+            params.append(k, query[k]);
         }
+        params = await wbi(params);
+        PLAYURL_API.search = params.toString();
         return PLAYURL_API;
     }
     async getPlayurl() {
-        let rurl = this.fillPlayAPIUrl();
+        let rurl = await this.fillPlayAPIUrl();
         let response = await axios.get(rurl.href, {
             headers: {
                 'referer': 'https://www.bilibili.com/',
-                'cookie': `SESSDATA=${session};`
+                'cookie': `SESSDATA=${session}`
             }
         }).then(response => response.data).catch(err => handleAxiosErr(err));
         if (response.code !== 0) {

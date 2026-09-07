@@ -194,7 +194,7 @@ const wsService = (roomid: number, URL: URL, token: string, config?: IConfig) =>
         }
         if (data.cmd == 'INTERACT_WORD_V2') {
           const buffer = Buffer.from(data.data.pb, 'base64');
-          const message = Message.decode(buffer).toJSON();
+          const message = Message.decode(new Uint8Array(buffer)).toJSON();
           const time = new Date(message.timestamp * 1000);
           if (message.msgType == 1) {
             lognWrite(`[${formatTime(time)}] ${message.uname} 进入直播间`);
